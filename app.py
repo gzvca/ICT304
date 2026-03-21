@@ -42,38 +42,38 @@ st.markdown(
 
     .block-container {
         max-width: 1200px;
-        padding-top: 1.5rem;
+        padding-top: 1.3rem;
         padding-bottom: 2rem;
     }
 
     .section-title {
         color: #0B2A4A;
-        font-size: 1.25rem;
+        font-size: 1.35rem;
         font-weight: 800;
-        margin: 8px 0 14px 0;
+        margin: 1.1rem 0 1rem 0;
     }
 
     .card {
         background: white;
         border: 1px solid #CBD5E1;
         border-radius: 22px;
-        padding: 26px;
-        min-height: 260px;
+        padding: 28px;
+        min-height: 270px;
         box-shadow: 0 6px 20px rgba(0,0,0,0.06);
     }
 
     .card-title {
         color: #0B2A4A;
-        font-size: 1.45rem;
+        font-size: 1.55rem;
         font-weight: 800;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
     .card-desc {
         color: #475569;
         font-size: 1rem;
-        line-height: 1.65;
-        margin-bottom: 16px;
+        line-height: 1.7;
+        margin-bottom: 18px;
     }
 
     .pill {
@@ -81,18 +81,18 @@ st.markdown(
         background: #EEF5FB;
         color: #2F6FA3;
         border-radius: 999px;
-        padding: 6px 12px;
-        margin-right: 6px;
-        margin-bottom: 8px;
-        font-size: 0.85rem;
+        padding: 7px 13px;
+        margin-right: 7px;
+        margin-bottom: 9px;
+        font-size: 0.86rem;
         font-weight: 600;
     }
 
     .footer {
         text-align: center;
-        margin-top: 26px;
+        margin-top: 28px;
         color: #64748B;
-        font-size: 0.95rem;
+        font-size: 0.98rem;
     }
 
     .stButton > button {
@@ -100,7 +100,7 @@ st.markdown(
         color: white;
         border-radius: 12px;
         font-weight: 700;
-        padding: 0.75rem 1rem;
+        padding: 0.8rem 1rem;
         border: none;
     }
 
@@ -128,6 +128,10 @@ if st.session_state.page == "home":
     <html>
     <head>
       <style>
+        * {{
+          box-sizing: border-box;
+        }}
+
         body {{
           margin: 0;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -135,51 +139,56 @@ if st.session_state.page == "home":
         }}
 
         .hero-card {{
+          width: 100%;
           background: linear-gradient(135deg, #0B2A4A 0%, #2F6FA3 100%);
-          border-radius: 26px;
-          padding: 34px 38px;
-          box-shadow: 0 12px 30px rgba(0,0,0,0.14);
+          border-radius: 28px;
+          padding: 34px 40px;
+          box-shadow: 0 14px 30px rgba(0,0,0,0.14);
           color: white;
         }}
 
         .hero-flex {{
           display: flex;
           align-items: center;
-          gap: 28px;
+          gap: 26px;
+          min-height: 185px;
         }}
 
         .hero-logo-wrap {{
           flex: 0 0 auto;
-          padding: 14px;
-          border-radius: 22px;
-          background: rgba(255,255,255,0.18);
-          border: 1px solid rgba(255,255,255,0.22);
+          padding: 12px;
+          border-radius: 20px;
+          background: rgba(255,255,255,0.16);
+          border: 1px solid rgba(255,255,255,0.20);
           backdrop-filter: blur(8px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.10);
         }}
 
         .hero-logo-wrap img {{
-          width: 120px;
+          width: 105px;
           height: auto;
           display: block;
         }}
 
         .hero-text {{
-          flex: 1;
+          flex: 1 1 auto;
+          min-width: 0;
         }}
 
         .hero-title {{
-          font-size: 3rem;
+          font-size: 3.2rem;
           font-weight: 800;
           line-height: 1.05;
-          margin: 0 0 10px 0;
+          margin: 0 0 14px 0;
+          color: #ffffff;
         }}
 
         .hero-sub {{
-          font-size: 1.1rem;
-          line-height: 1.6;
-          color: rgba(255,255,255,0.92);
+          font-size: 1.12rem;
+          line-height: 1.65;
+          color: rgba(255,255,255,0.93);
           margin: 0;
+          max-width: 760px;
         }}
 
         @media (max-width: 768px) {{
@@ -189,11 +198,11 @@ if st.session_state.page == "home":
           }}
 
           .hero-logo-wrap img {{
-            width: 95px;
+            width: 88px;
           }}
 
           .hero-title {{
-            font-size: 2.2rem;
+            font-size: 2.3rem;
           }}
         }}
       </style>
@@ -216,7 +225,7 @@ if st.session_state.page == "home":
     </html>
     """
 
-    components.html(hero_html, height=210, scrolling=False)
+    components.html(hero_html, height=230, scrolling=False)
 
     st.markdown('<div class="section-title">Choose a Module</div>', unsafe_allow_html=True)
 

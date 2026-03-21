@@ -24,74 +24,115 @@ def inject_css():
         """
         <style>
         .main {
-            background-color: #F4F8FB;
+            background: linear-gradient(180deg, #f4f8fb 0%, #eef4f9 100%);
         }
 
-        /* HERO */
-        .smartcount-hero {
-            background: linear-gradient(135deg, #0B2A4A 0%, #2F6FA3 100%);
-            border-radius: 22px;
-            padding: 30px;
+        .block-container {
+            max-width: 1200px;
+            padding-top: 1.2rem;
+            padding-bottom: 2rem;
+        }
+
+        .hero-wrap {
+            background: linear-gradient(135deg, #0B2A4A 0%, #1e4f82 50%, #2F6FA3 100%);
+            border-radius: 28px;
+            padding: 34px 36px;
             color: white;
             margin-bottom: 22px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            box-shadow: 0 16px 35px rgba(11, 42, 74, 0.18);
+            position: relative;
+            overflow: hidden;
         }
 
-        .smartcount-title {
-            font-size: 2.6rem;
+        .hero-wrap::after {
+            content: "";
+            position: absolute;
+            right: -60px;
+            top: -60px;
+            width: 220px;
+            height: 220px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        .hero-title {
+            font-size: 3rem;
             font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
         }
 
-        .smartcount-subtitle {
-            font-size: 1rem;
-            opacity: 0.9;
+        .hero-subtitle {
+            font-size: 1.06rem;
+            line-height: 1.7;
+            opacity: 0.95;
+            max-width: 780px;
+            position: relative;
+            z-index: 1;
         }
 
-        /* CARD */
-        .section-card {
-            background: white;
-            border-radius: 18px;
-            padding: 18px;
-            border: 1px solid #AFC3D4;
-            box-shadow: 0 6px 18px rgba(11, 42, 74, 0.08);
+        .panel {
+            background: rgba(255,255,255,0.92);
+            border: 1px solid #d7e4ef;
+            border-radius: 24px;
+            padding: 22px;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
             margin-bottom: 18px;
         }
 
-        .section-title {
-            font-size: 1.2rem;
-            font-weight: 700;
+        .panel-title {
+            font-size: 1.22rem;
+            font-weight: 800;
             color: #0B2A4A;
+            margin-bottom: 12px;
+        }
+
+        .panel-sub {
+            color: #64748B;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .stat-card {
+            border-radius: 20px;
+            padding: 18px;
+            color: white;
+            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
             margin-bottom: 10px;
         }
 
-        /* METRICS */
-        .metric-box {
-            background: linear-gradient(180deg, #ffffff 0%, #eef5fb 100%);
-            border-radius: 16px;
-            padding: 18px;
-            border: 1px solid #AFC3D4;
+        .stat-blue {
+            background: linear-gradient(135deg, #2F6FA3 0%, #4f8fc4 100%);
         }
 
-        .metric-label {
-            color: #6FA7C9;
-            font-size: 0.9rem;
+        .stat-dark {
+            background: linear-gradient(135deg, #0B2A4A 0%, #234e7b 100%);
         }
 
-        .metric-big {
-            font-size: 1.9rem;
-            font-weight: 800;
-            color: #0B2A4A;
-        }
-
-        /* COUNT CARDS */
-        .count-card {
-            padding: 12px 16px;
+        .stat-label {
+            font-size: 0.92rem;
+            opacity: 0.92;
             margin-bottom: 8px;
-            border-radius: 12px;
-            background: linear-gradient(180deg, #ffffff 0%, #eef5fb 100%);
-            border: 1px solid #AFC3D4;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.05;
+        }
+
+        .count-row {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, #ffffff 0%, #f5f9fd 100%);
+            border: 1px solid #dce8f2;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
         }
 
         .count-name {
@@ -100,55 +141,92 @@ def inject_css():
         }
 
         .count-value {
-            font-weight: 800;
+            background: #e9f2fa;
             color: #2F6FA3;
+            font-weight: 800;
+            padding: 6px 12px;
+            border-radius: 999px;
+            min-width: 42px;
+            text-align: center;
         }
 
-        /* ALERT */
+        .alert-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #9a3412;
+            margin-bottom: 10px;
+        }
+
         .alert-box {
-            background: #fff7ed;
-            border-left: 5px solid #f97316;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 8px;
-            color: #7c2d12;
+            background: linear-gradient(180deg, #fff7ed 0%, #ffedd5 100%);
+            border: 1px solid #fdba74;
+            color: #9a3412;
+            padding: 13px 14px;
+            border-radius: 14px;
+            margin-bottom: 9px;
             font-weight: 600;
+            line-height: 1.5;
         }
 
-        .success-box {
-            background: #ecfdf5;
-            border-left: 5px solid #22c55e;
-            padding: 12px;
-            border-radius: 10px;
-            color: #14532d;
-            font-weight: 600;
+        .ok-box {
+            background: linear-gradient(180deg, #ecfdf5 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+            color: #166534;
+            padding: 14px;
+            border-radius: 14px;
+            font-weight: 700;
         }
 
-        /* BUTTON */
-        .stButton>button {
-            background-color: #2F6FA3;
+        .soft-box {
+            background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+            color: #1d4ed8;
+            padding: 16px;
+            border-radius: 16px;
+            line-height: 1.6;
+        }
+
+        .note {
+            color: #64748B;
+            font-size: 0.94rem;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+
+        .stButton > button {
+            background: linear-gradient(135deg, #2F6FA3 0%, #3f82bb 100%);
             color: white;
-            border-radius: 10px;
-            font-weight: 600;
+            border-radius: 14px;
+            font-weight: 800;
             border: none;
+            padding: 0.78rem 1rem;
+            box-shadow: 0 8px 18px rgba(47, 111, 163, 0.22);
         }
 
-        .stButton>button:hover {
-            background-color: #0B2A4A;
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #0B2A4A 0%, #1e4f82 100%);
+            color: white;
         }
 
-        /* RADIO BUTTONS */
+        .stButton > button:focus:not(:active) {
+            color: white;
+            border-color: transparent;
+        }
+
         div[role="radiogroup"] label {
             background: white;
-            border: 1px solid #AFC3D4;
+            border: 1px solid #d8e4ee;
             padding: 8px 14px;
-            border-radius: 20px;
+            border-radius: 999px;
         }
 
         div[role="radiogroup"] label:hover {
             border-color: #2F6FA3;
         }
 
+        .stSlider, .stSelectSlider, .stFileUploader {
+            padding-top: 4px;
+        }
         </style>
         """,
         unsafe_allow_html=True
@@ -389,8 +467,8 @@ def launch_webcam_script():
 
 
 def show_counts(counts):
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Detected Counts</div>', unsafe_allow_html=True)
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title">Detected Counts</div>', unsafe_allow_html=True)
 
     if not counts:
         st.warning("No objects detected.")
@@ -403,9 +481,9 @@ def show_counts(counts):
     with c1:
         st.markdown(
             f"""
-            <div class="metric-box">
-                <div class="metric-label">Classes Detected</div>
-                <div class="metric-big">{len(counts)}</div>
+            <div class="stat-card stat-dark">
+                <div class="stat-label">Classes Detected</div>
+                <div class="stat-value">{len(counts)}</div>
             </div>
             """,
             unsafe_allow_html=True
@@ -413,21 +491,20 @@ def show_counts(counts):
     with c2:
         st.markdown(
             f"""
-            <div class="metric-box">
-                <div class="metric-label">Total Items</div>
-                <div class="metric-big">{total}</div>
+            <div class="stat-card stat-blue">
+                <div class="stat-label">Total Items</div>
+                <div class="stat-value">{total}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Breakdown</div>', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title" style="margin-top:12px;">Breakdown</div>', unsafe_allow_html=True)
 
     for class_name, count in sorted(counts.items()):
         st.markdown(
             f"""
-            <div class="count-card">
+            <div class="count-row">
                 <span class="count-name">{class_name}</span>
                 <span class="count-value">{count}</span>
             </div>
@@ -436,7 +513,7 @@ def show_counts(counts):
         )
 
     st.markdown(
-        '<div class="mini-note">These counts are based on filtered boxes, not raw model detections.</div>',
+        '<div class="note">These counts are based on filtered boxes, not raw model detections.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
@@ -455,17 +532,15 @@ def check_alerts(counts):
 def show_alerts(counts):
     alerts = check_alerts(counts)
 
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Inventory Alerts</div>', unsafe_allow_html=True)
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title">Inventory Alerts</div>', unsafe_allow_html=True)
 
     if alerts:
+        st.markdown('<div class="alert-title">Attention needed</div>', unsafe_allow_html=True)
         for a in alerts:
             st.markdown(f'<div class="alert-box">{a}</div>', unsafe_allow_html=True)
     else:
-        st.markdown(
-            '<div class="success-box">✅ Stock levels are sufficient</div>',
-            unsafe_allow_html=True
-        )
+        st.markdown('<div class="ok-box">✅ Stock levels are sufficient</div>', unsafe_allow_html=True)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -473,10 +548,10 @@ def show_alerts(counts):
 def render_header():
     st.markdown(
         """
-        <div class="smartcount-hero">
-            <div class="smartcount-title">SmartCount</div>
-            <div class="smartcount-subtitle">
-                AI-powered inventory counting for images, videos, and live webcam monitoring.
+        <div class="hero-wrap">
+            <div class="hero-title">SmartCount</div>
+            <div class="hero-subtitle">
+                AI-powered inventory counting for images, uploaded videos, and live webcam monitoring.
             </div>
         </div>
         """,
@@ -496,8 +571,8 @@ def render(go_to):
 
     model = load_model()
 
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Settings</div>', unsafe_allow_html=True)
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title">Settings</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2)
     with c1:
@@ -505,11 +580,14 @@ def render(go_to):
     with c2:
         imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
 
-    st.markdown('<div class="mini-note">Choose a higher threshold to reduce duplicates, or a lower threshold to catch more objects.</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="note">Choose a higher threshold to reduce duplicates, or a lower threshold to catch more objects.</div>',
+        unsafe_allow_html=True
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="section-card">', unsafe_allow_html=True)
-    st.markdown('<div class="section-title">Input Type</div>', unsafe_allow_html=True)
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title">Input Type</div>', unsafe_allow_html=True)
 
     option = st.radio(
         "Select input type",
@@ -521,8 +599,8 @@ def render(go_to):
     st.markdown('</div>', unsafe_allow_html=True)
 
     if option == "Upload Image":
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Upload Image</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Upload Image</div>', unsafe_allow_html=True)
 
         uploaded_file = st.file_uploader(
             "Upload an image",
@@ -546,15 +624,15 @@ def render(go_to):
             filtered, counts = get_detections_and_counts(res, conf_thres)
             annotated = draw_filtered_boxes(image_np, filtered)
 
-            st.image(annotated, caption="Filtered Prediction Result", width=1200)
+            st.image(annotated, caption="Prediction Result", width=1200)
             show_counts(counts)
             show_alerts(counts)
 
         st.markdown('</div>', unsafe_allow_html=True)
 
     elif option == "Upload Video":
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Upload Video</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Upload Video</div>', unsafe_allow_html=True)
 
         uploaded_video = st.file_uploader(
             "Upload a video",
@@ -622,12 +700,12 @@ def render(go_to):
         st.markdown('</div>', unsafe_allow_html=True)
 
     elif option == "Webcam Live":
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="section-title">Live Webcam</div>', unsafe_allow_html=True)
+        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown('<div class="panel-title">Live Webcam</div>', unsafe_allow_html=True)
 
         st.markdown(
             """
-            <div class="webcam-box">
+            <div class="soft-box">
                 This mode launches your existing OpenCV live counting app in a separate window.<br>
                 Press <b>q</b> inside the popup window to finish live counting.
             </div>
