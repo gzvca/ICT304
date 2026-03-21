@@ -8,7 +8,6 @@ if "page" not in st.session_state:
 def go_to(page):
     st.session_state.page = page
 
-# HOME PAGE
 if st.session_state.page == "home":
     st.title("SuperSmart")
     st.write("Choose a module")
@@ -27,12 +26,10 @@ if st.session_state.page == "home":
             go_to("smartcast")
             st.rerun()
 
-# SMARTCOUNT PAGE
 elif st.session_state.page == "smartcount":
     import pages.smartcount as smartcount
     smartcount.render(go_to)
 
-# SMARTCAST PAGE
 elif st.session_state.page == "smartcast":
     import pages.smartcast as smartcast
     smartcast.render(go_to)
