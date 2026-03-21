@@ -19,6 +19,142 @@ def load_model():
     return YOLO(MODEL_PATH)
 
 
+def inject_css():
+    st.markdown(
+        """
+        <style>
+        .main {
+            background-color: #F4F8FB;
+        }
+
+        /* HERO */
+        .smartcount-hero {
+            background: linear-gradient(135deg, #0B2A4A 0%, #2F6FA3 100%);
+            border-radius: 22px;
+            padding: 30px;
+            color: white;
+            margin-bottom: 22px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .smartcount-title {
+            font-size: 2.6rem;
+            font-weight: 800;
+        }
+
+        .smartcount-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* CARD */
+        .section-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid #AFC3D4;
+            box-shadow: 0 6px 18px rgba(11, 42, 74, 0.08);
+            margin-bottom: 18px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0B2A4A;
+            margin-bottom: 10px;
+        }
+
+        /* METRICS */
+        .metric-box {
+            background: linear-gradient(180deg, #ffffff 0%, #eef5fb 100%);
+            border-radius: 16px;
+            padding: 18px;
+            border: 1px solid #AFC3D4;
+        }
+
+        .metric-label {
+            color: #6FA7C9;
+            font-size: 0.9rem;
+        }
+
+        .metric-big {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #0B2A4A;
+        }
+
+        /* COUNT CARDS */
+        .count-card {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, #ffffff 0%, #eef5fb 100%);
+            border: 1px solid #AFC3D4;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .count-name {
+            font-weight: 700;
+            color: #0B2A4A;
+        }
+
+        .count-value {
+            font-weight: 800;
+            color: #2F6FA3;
+        }
+
+        /* ALERT */
+        .alert-box {
+            background: #fff7ed;
+            border-left: 5px solid #f97316;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            color: #7c2d12;
+            font-weight: 600;
+        }
+
+        .success-box {
+            background: #ecfdf5;
+            border-left: 5px solid #22c55e;
+            padding: 12px;
+            border-radius: 10px;
+            color: #14532d;
+            font-weight: 600;
+        }
+
+        /* BUTTON */
+        .stButton>button {
+            background-color: #2F6FA3;
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+            border: none;
+        }
+
+        .stButton>button:hover {
+            background-color: #0B2A4A;
+        }
+
+        /* RADIO BUTTONS */
+        div[role="radiogroup"] label {
+            background: white;
+            border: 1px solid #AFC3D4;
+            padding: 8px 14px;
+            border-radius: 20px;
+        }
+
+        div[role="radiogroup"] label:hover {
+            border-color: #2F6FA3;
+        }
+
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+
 def compute_iou(box_a, box_b):
     x1 = max(box_a[0], box_b[0])
     y1 = max(box_a[1], box_b[1])
@@ -108,7 +244,6 @@ def suppress_duplicates_per_class(detections):
 
             for kept_det in selected:
                 _, _, kept_box = kept_det
-
                 iou = compute_iou(box, kept_box)
                 dist = center_distance(box, kept_box)
 
@@ -254,72 +389,103 @@ def launch_webcam_script():
 
 
 def show_counts(counts):
-    st.subheader("Detected Counts")
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Detected Counts</div>', unsafe_allow_html=True)
 
     if not counts:
         st.warning("No objects detected.")
+        st.markdown('</div>', unsafe_allow_html=True)
         return
 
     total = sum(counts.values())
 
     c1, c2 = st.columns(2)
     with c1:
-        st.metric("Classes Detected", len(counts))
-    with c2:
-        st.metric("Total Items", total)
-
-    st.markdown("### Breakdown")
-    for class_name, count in sorted(counts.items()):
         st.markdown(
             f"""
-            <div style="
-                padding:12px 16px;
-                margin-bottom:10px;
-                border-radius:12px;
-                background:#f7f7f9;
-                border:1px solid #e6e6ea;
-                display:flex;
-                justify-content:space-between;
-                align-items:center;
-                font-size:20px;
-            ">
-                <span><b>{class_name}</b></span>
-                <span>{count}</span>
+            <div class="metric-box">
+                <div class="metric-label">Classes Detected</div>
+                <div class="metric-big">{len(counts)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+    with c2:
+        st.markdown(
+            f"""
+            <div class="metric-box">
+                <div class="metric-label">Total Items</div>
+                <div class="metric-big">{total}</div>
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    st.caption("These counts are based on filtered boxes, not raw model detections.")
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Breakdown</div>', unsafe_allow_html=True)
+
+    for class_name, count in sorted(counts.items()):
+        st.markdown(
+            f"""
+            <div class="count-card">
+                <span class="count-name">{class_name}</span>
+                <span class="count-value">{count}</span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown(
+        '<div class="mini-note">These counts are based on filtered boxes, not raw model detections.</div>',
+        unsafe_allow_html=True
+    )
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def check_alerts(counts):
+    alerts = []
+
+    for item, count in counts.items():
+        if count < 3:
+            alerts.append(f"⚠️ {item}: Low stock (restock soon) — only {count} left")
+
+    return alerts
+
+
+def show_alerts(counts):
+    alerts = check_alerts(counts)
+
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Inventory Alerts</div>', unsafe_allow_html=True)
+
+    if alerts:
+        for a in alerts:
+            st.markdown(f'<div class="alert-box">{a}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(
+            '<div class="success-box">✅ Stock levels are sufficient</div>',
+            unsafe_allow_html=True
+        )
+
+    st.markdown('</div>', unsafe_allow_html=True)
 
 
 def render_header():
     st.markdown(
         """
-        <style>
-        .smartcount-title {
-            font-size: 3rem;
-            font-weight: 800;
-            margin-bottom: 0.25rem;
-        }
-        .smartcount-subtitle {
-            color: #666;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-        </style>
+        <div class="smartcount-hero">
+            <div class="smartcount-title">SmartCount</div>
+            <div class="smartcount-subtitle">
+                AI-powered inventory counting for images, videos, and live webcam monitoring.
+            </div>
+        </div>
         """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown('<div class="smartcount-title">SmartCount</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="smartcount-subtitle">Choose an input type for counting.</div>',
         unsafe_allow_html=True
     )
 
 
 def render(go_to):
+    inject_css()
     render_header()
 
     top_cols = st.columns([1, 4])
@@ -330,22 +496,38 @@ def render(go_to):
 
     model = load_model()
 
-    st.markdown("### Settings")
-    conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.75, 0.05)
-    imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Settings</div>', unsafe_allow_html=True)
+
+    c1, c2 = st.columns(2)
+    with c1:
+        conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.75, 0.05)
+    with c2:
+        imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
+
+    st.markdown('<div class="mini-note">Choose a higher threshold to reduce duplicates, or a lower threshold to catch more objects.</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    st.markdown('<div class="section-card">', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">Input Type</div>', unsafe_allow_html=True)
 
     option = st.radio(
         "Select input type",
         ["Upload Image", "Upload Video", "Webcam Live"],
-        horizontal=True
+        horizontal=True,
+        label_visibility="collapsed"
     )
 
-    st.divider()
+    st.markdown('</div>', unsafe_allow_html=True)
 
     if option == "Upload Image":
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Upload Image</div>', unsafe_allow_html=True)
+
         uploaded_file = st.file_uploader(
             "Upload an image",
-            type=["jpg", "jpeg", "png", "webp"]
+            type=["jpg", "jpeg", "png", "webp"],
+            label_visibility="collapsed"
         )
 
         if uploaded_file is not None:
@@ -366,11 +548,18 @@ def render(go_to):
 
             st.image(annotated, caption="Filtered Prediction Result", width=1200)
             show_counts(counts)
+            show_alerts(counts)
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
     elif option == "Upload Video":
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Upload Video</div>', unsafe_allow_html=True)
+
         uploaded_video = st.file_uploader(
             "Upload a video",
-            type=["mp4", "mov", "avi", "mkv"]
+            type=["mp4", "mov", "avi", "mkv"],
+            label_visibility="collapsed"
         )
 
         if uploaded_video is not None:
@@ -380,13 +569,16 @@ def render(go_to):
 
             st.video(video_path)
 
-            if st.button("Process Video"):
+            if st.button("Process Video", use_container_width=True):
                 cap = cv2.VideoCapture(video_path)
                 all_counts = defaultdict(list)
                 frame_idx = 0
 
                 preview = st.empty()
-                progress_text = st.empty()
+                progress_bar = st.progress(0, text="Processing video...")
+
+                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                total_frames = max(total_frames, 1)
 
                 while True:
                     ret, frame = cap.read()
@@ -414,18 +606,36 @@ def render(go_to):
 
                     annotated = draw_filtered_boxes(frame_rgb, filtered)
                     preview.image(annotated, width=1200)
-                    progress_text.write(f"Processed frame: {frame_idx}")
+
+                    progress_value = min(frame_idx / total_frames, 1.0)
+                    progress_bar.progress(progress_value, text=f"Processing frame {frame_idx}...")
 
                 cap.release()
 
                 final_counts = stable_video_count(all_counts)
+                progress_bar.empty()
 
                 st.success("Video processing completed.")
                 show_counts(final_counts)
+                show_alerts(final_counts)
+
+        st.markdown('</div>', unsafe_allow_html=True)
 
     elif option == "Webcam Live":
-        st.info("This mode launches your existing OpenCV live counting app in a separate window.")
-        st.write("Press **q** inside the popup window to finish live counting.")
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Live Webcam</div>', unsafe_allow_html=True)
 
-        if st.button("Start Live Webcam"):
+        st.markdown(
+            """
+            <div class="webcam-box">
+                This mode launches your existing OpenCV live counting app in a separate window.<br>
+                Press <b>q</b> inside the popup window to finish live counting.
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if st.button("Start Live Webcam", use_container_width=True):
             launch_webcam_script()
+
+        st.markdown('</div>', unsafe_allow_html=True)
