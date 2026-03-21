@@ -1,0 +1,3 @@
+event_time,session_id,class_name,final_count,method,camera_name
+2026-03-22 01:34:20,run_20260322_013334,Noodles,1,manual_finish_percentile,cam_1
+2026-03-22 01:34:20,run_20260322_013334,Sweets,2,manual_finish_percentile,cam_1
