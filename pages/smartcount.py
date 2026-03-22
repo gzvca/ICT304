@@ -605,26 +605,135 @@ def show_history_table():
 
     rows = list(reversed(rows))
 
+    # ---------- filters ----------
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Scan History</div>', unsafe_allow_html=True)
 
-    row_html = ""
-    for row in rows[:20]:
-        timestamp = row.get("timestamp", "")
-        source = row.get("source", "")
-        total_items = row.get("total_items", "")
-        classes_detected = row.get("classes_detected", "")
-        low_stock_items = row.get("low_stock_items", "")
+    c1, c2, c3 = st.columns([1, 1, 2])
+
+    with c1:
+        source_filter = st.selectbox(
+            "Filter by Source",
+            ["All", "Image", "Video", "Webcam"],
+            index=0
+        )
+
+    with c2:
+        status_filter = st.selectbox(
+            "Filter by Status",
+            ["All", "OK", "Low Stock"],
+            index=0
+        )
+
+    with c3:
+        search_text = st.text_input("Search item in Count Breakdown", "")
+
+    # ---------- enrich rows ----------
+    enriched_rows = []
+    for row in rows:
+        low_stock_items = row.get("low_stock_items", "None")
         counts_json = row.get("counts_json", "")
+
+        status = "Low Stock" if low_stock_items != "None" else "OK"
+
+        enriched_rows.append({
+            "timestamp": row.get("timestamp", ""),
+            "source": row.get("source", ""),
+            "classes_detected": row.get("classes_detected", ""),
+            "counts_json": counts_json,
+            "total_items": row.get("total_items", ""),
+            "low_stock_items": low_stock_items,
+            "status": status,
+        })
+
+    # ---------- apply filters ----------
+    filtered_rows = []
+    for row in enriched_rows:
+        if source_filter != "All" and row["source"] != source_filter:
+            continue
+
+        if status_filter != "All" and row["status"] != status_filter:
+            continue
+
+        if search_text.strip():
+            if search_text.lower() not in row["counts_json"].lower():
+                continue
+
+        filtered_rows.append(row)
+
+    # ---------- summary cards ----------
+    total_scans = len(filtered_rows)
+    latest_source = filtered_rows[0]["source"] if filtered_rows else "-"
+    latest_total = filtered_rows[0]["total_items"] if filtered_rows else "-"
+    low_stock_scans = sum(1 for r in filtered_rows if r["status"] == "Low Stock")
+
+    s1, s2, s3, s4 = st.columns(4)
+
+    with s1:
+        st.markdown(
+            f"""
+            <div class="stat-card stat-dark">
+                <div class="stat-label">Total Scans</div>
+                <div class="stat-value">{total_scans}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with s2:
+        st.markdown(
+            f"""
+            <div class="stat-card stat-blue">
+                <div class="stat-label">Latest Source</div>
+                <div class="stat-value" style="font-size:1.4rem;">{latest_source}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with s3:
+        st.markdown(
+            f"""
+            <div class="stat-card stat-dark">
+                <div class="stat-label">Latest Total Items</div>
+                <div class="stat-value">{latest_total}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with s4:
+        st.markdown(
+            f"""
+            <div class="stat-card stat-blue">
+                <div class="stat-label">Low Stock Scans</div>
+                <div class="stat-value">{low_stock_scans}</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    # ---------- build table ----------
+    row_html = ""
+    for row in filtered_rows[:20]:
+        status_badge = (
+            '<span style="background:#fee2e2;color:#b91c1c;padding:6px 12px;border-radius:999px;font-weight:700;">Low Stock</span>'
+            if row["status"] == "Low Stock"
+            else
+            '<span style="background:#dcfce7;color:#166534;padding:6px 12px;border-radius:999px;font-weight:700;">OK</span>'
+        )
+
+        counts_pretty = row["counts_json"].replace(";", "<br>")
 
         row_html += f"""
             <tr>
-                <td>{timestamp}</td>
-                <td>{source}</td>
-                <td>{classes_detected}</td>
-                <td>{counts_json}</td>
-                <td>{total_items}</td>
-                <td>{low_stock_items}</td>
+                <td>{row["timestamp"]}</td>
+                <td>{row["source"]}</td>
+                <td>{row["classes_detected"]}</td>
+                <td>{counts_pretty}</td>
+                <td>{row["total_items"]}</td>
+                <td>{row["low_stock_items"]}</td>
+                <td>{status_badge}</td>
             </tr>
         """
 
@@ -646,6 +755,7 @@ def show_history_table():
                 border-spacing: 0;
                 overflow: hidden;
                 border-radius: 14px;
+                margin-top: 12px;
             }}
 
             .history-table th {{
@@ -656,14 +766,6 @@ def show_history_table():
                 font-size: 0.95rem;
                 position: sticky;
                 top: 0;
-            }}
-
-            .history-table th:first-child {{
-                border-top-left-radius: 12px;
-            }}
-
-            .history-table th:last-child {{
-                border-top-right-radius: 12px;
             }}
 
             .history-table td {{
@@ -688,13 +790,18 @@ def show_history_table():
                 text-align: left;
                 white-space: normal;
                 word-break: break-word;
-                min-width: 220px;
+                min-width: 230px;
+                line-height: 1.6;
             }}
 
             .history-table td:nth-child(6) {{
                 white-space: normal;
                 word-break: break-word;
                 min-width: 180px;
+            }}
+
+            .history-table td:nth-child(7) {{
+                min-width: 120px;
             }}
         </style>
     </head>
@@ -708,6 +815,7 @@ def show_history_table():
                     <th>Count Breakdown</th>
                     <th>Total Items</th>
                     <th>Low Stock</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -718,7 +826,7 @@ def show_history_table():
     </html>
     """
 
-    table_height = 70 + min(len(rows[:20]), 20) * 52
+    table_height = 120 + min(len(filtered_rows[:20]), 20) * 58
     components.html(table_html, height=table_height, scrolling=True)
 
     with open(HISTORY_CSV, "rb") as f:

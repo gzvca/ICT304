@@ -3,3 +3,16 @@ timestamp,source,total_items,classes_detected,low_stock_items,counts_json
 2026-03-22 18:03:57,Image,21,8,"Chips, Apples, Soft Drinks, Packet Drinks, Noodles",Apples: 1; Bread: 5; Chips: 1; Noodles: 1; Oranges: 3; Packet Drinks: 1; Soft Drinks: 2; Sweets: 7
 2026-03-22 18:04:51,Video,15,8,"Sweets, Chips, Bread, Packet Drinks, Soft Drinks, Oranges, Noodles",Apples: 5; Bread: 2; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 2; Soft Drinks: 1; Sweets: 2
 2026-03-22 18:05:21,Webcam,3,2,"Sweets, Noodles",Noodles: 1; Sweets: 2
+2026-03-22 21:45:15,Image,19,7,"Packet Drinks, Chips, Sweets",Apples: 3; Bread: 5; Chips: 2; Noodles: 3; Packet Drinks: 2; Soft Drinks: 3; Sweets: 1
+2026-03-22 21:45:31,Image,26,8,"Packet Drinks, Chips, Sweets",Apples: 4; Bread: 7; Chips: 2; Noodles: 3; Oranges: 3; Packet Drinks: 2; Soft Drinks: 3; Sweets: 2
+2026-03-22 21:45:52,Image,30,8,"Packet Drinks, Chips, Soft Drinks, Oranges",Apples: 5; Bread: 4; Chips: 2; Noodles: 4; Oranges: 2; Packet Drinks: 2; Soft Drinks: 2; Sweets: 9
+2026-03-22 21:46:02,Image,36,8,"Packet Drinks, Chips",Apples: 6; Bread: 6; Chips: 2; Noodles: 4; Oranges: 3; Packet Drinks: 2; Soft Drinks: 3; Sweets: 10
+2026-03-22 21:46:11,Image,40,8,Packet Drinks,Apples: 6; Bread: 6; Chips: 3; Noodles: 4; Oranges: 3; Packet Drinks: 2; Soft Drinks: 4; Sweets: 12
+2026-03-22 21:46:23,Image,30,8,"Packet Drinks, Chips, Soft Drinks, Oranges",Apples: 5; Bread: 4; Chips: 2; Noodles: 4; Oranges: 2; Packet Drinks: 2; Soft Drinks: 2; Sweets: 9
+2026-03-22 21:46:24,Image,30,8,"Packet Drinks, Chips, Soft Drinks, Oranges",Apples: 5; Bread: 4; Chips: 2; Noodles: 4; Oranges: 2; Packet Drinks: 2; Soft Drinks: 2; Sweets: 9
+2026-03-22 21:46:37,Image,30,8,"Chips, Packet Drinks, Oranges",Apples: 3; Bread: 5; Chips: 2; Noodles: 4; Oranges: 1; Packet Drinks: 2; Soft Drinks: 4; Sweets: 9
+2026-03-22 21:47:08,Image,26,8,"Packet Drinks, Chips, Sweets",Apples: 4; Bread: 7; Chips: 2; Noodles: 3; Oranges: 3; Packet Drinks: 2; Soft Drinks: 3; Sweets: 2
+2026-03-22 21:47:27,Image,26,8,"Packet Drinks, Chips, Sweets",Apples: 4; Bread: 7; Chips: 2; Noodles: 3; Oranges: 3; Packet Drinks: 2; Soft Drinks: 3; Sweets: 2
+2026-03-22 21:48:39,Image,3,1,None,Packet Drinks: 3
+2026-03-22 21:49:09,Image,4,1,None,Noodles: 4
+2026-03-22 21:49:37,Image,32,8,"Packet Drinks, Chips, Bread, Oranges",Apples: 5; Bread: 2; Chips: 2; Noodles: 5; Oranges: 1; Packet Drinks: 2; Soft Drinks: 4; Sweets: 11
