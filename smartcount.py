@@ -4,6 +4,8 @@ from datetime import datetime
 import cv2
 import csv
 import os
+import time
+import numpy as np
 
 # =====================================
 # SETTINGS
@@ -12,17 +14,24 @@ MODEL_PATH = "my_model.pt"
 HISTORY_CSV = "smartcount_history.csv"
 CAMERA_INDEX = 0
 
-CONF_THRES = 0.7
-IMGSZ = 640
+CONF_THRES = 0.75
+IMGRES = 320
 FRAME_SKIP = 2
 MIN_SEEN_FRAMES = 2
+
+SHOW_LABELS = True
+SHOW_CONF = True
+
+# Uncomment if you have CUDA
+# DEVICE = 0
+DEVICE = "cpu"
 
 # =====================================
 # LOAD MODEL
 # =====================================
 print("Loading model...")
 model = YOLO(MODEL_PATH)
-print("Model loaded")
+print("Model loaded.")
 
 # =====================================
 # OPEN CAMERA
@@ -31,21 +40,28 @@ print("Opening camera...")
 cap = cv2.VideoCapture(CAMERA_INDEX)
 if not cap.isOpened():
     raise FileNotFoundError("Could not open camera.")
-print("Camera opened")
+
+cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+print("Camera opened.")
 
 # =====================================
 # HELPERS
 # =====================================
-def draw_overlay(frame, class_counts, frame_idx):
-    padding = 12
+def draw_live_overlay(frame, class_counts, frame_idx, fps_value):
+    padding = 10
     line_height = 28
     font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.7
+    thickness = 2
 
     total = sum(class_counts.values())
-
     lines = [
         "SMARTCOUNT (Press Q to finish)",
         f"Frame: {frame_idx}",
+        f"FPS: {fps_value:.1f}",
     ]
 
     for cls_name in sorted(class_counts.keys()):
@@ -53,7 +69,7 @@ def draw_overlay(frame, class_counts, frame_idx):
 
     lines.append(f"TOTAL: {total}")
 
-    box_w = 360
+    box_w = 340
     box_h = padding * 2 + line_height * len(lines)
 
     overlay = frame.copy()
@@ -68,7 +84,51 @@ def draw_overlay(frame, class_counts, frame_idx):
         elif "TOTAL" in line:
             color = (0, 255, 0)
 
-        cv2.putText(frame, line, (padding, y), font, 0.7, color, 2)
+        cv2.putText(frame, line, (padding, y), font, font_scale, color, thickness)
+
+    return frame
+
+
+def draw_obb_fast(frame, res):
+    """
+    Draw oriented bounding boxes manually.
+    This avoids falling back to normal boxes.
+    """
+    if getattr(res, "obb", None) is None:
+        raise RuntimeError("This model/output does not provide OBB results.")
+
+    if len(res.obb) == 0:
+        return frame
+
+    names = res.names
+
+    corners = res.obb.xyxyxyxy.cpu().numpy().astype(int)   # shape: (N, 4, 2)
+    cls_ids = res.obb.cls.cpu().numpy().astype(int)
+    confs = res.obb.conf.cpu().numpy()
+
+    for pts, cid, conf in zip(corners, cls_ids, confs):
+        pts = pts.reshape((-1, 1, 2))
+        cv2.polylines(frame, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
+
+        label_parts = []
+        if SHOW_LABELS:
+            label_parts.append(str(names[cid]))
+        if SHOW_CONF:
+            label_parts.append(f"{conf:.2f}")
+
+        if label_parts:
+            label = " ".join(label_parts)
+            x = int(np.min(pts[:, 0, 0]))
+            y = int(np.min(pts[:, 0, 1])) - 8
+            cv2.putText(
+                frame,
+                label,
+                (x, max(20, y)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (0, 255, 0),
+                2,
+            )
 
     return frame
 
@@ -107,21 +167,26 @@ def save_history(final_counts, source_type="Webcam"):
 
     print("Saved to:", filepath)
 
+
 # =====================================
 # MAIN LOOP
 # =====================================
-print("Running... press 'q' when ready to finalize")
+print("Running detection... press 'q' when ready to finalize")
 
 frame_idx = 0
 count_history = defaultdict(list)
 seen_frames = defaultdict(int)
 last_annotated = None
 
+fps = 0.0
+prev_time = time.time()
+obb_checked = False
+
 try:
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Failed to read frame")
+            print("Failed to read frame.")
             break
 
         frame_idx += 1
@@ -129,29 +194,32 @@ try:
         if FRAME_SKIP > 1 and (frame_idx % FRAME_SKIP != 0):
             if last_annotated is not None:
                 cv2.imshow("SMARTCOUNT", last_annotated)
-            key = cv2.waitKey(30) & 0xFF
-            if key == ord("q"):
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
                 print("Finalizing...")
                 break
             continue
 
         res = model.predict(
             frame,
+            imgsz=IMGRES,
             conf=CONF_THRES,
-            imgsz=IMGSZ,
-            verbose=False
+            verbose=False,
+            device=DEVICE,
         )[0]
+
+        # Force OBB: never fall back to normal boxes
+        if not obb_checked:
+            obb_checked = True
+            if getattr(res, "obb", None) is None:
+                raise RuntimeError(
+                    "Forced OBB mode is enabled, but this model does not output OBB results."
+                )
 
         current_counts = defaultdict(int)
 
-        if getattr(res, "obb", None) is not None and len(res.obb) > 0:
+        if len(res.obb) > 0:
             class_ids = res.obb.cls.cpu().numpy().astype(int)
-            for cid in class_ids:
-                class_name = res.names[cid]
-                current_counts[class_name] += 1
-
-        elif getattr(res, "boxes", None) is not None and len(res.boxes) > 0:
-            class_ids = res.boxes.cls.cpu().numpy().astype(int)
             for cid in class_ids:
                 class_name = res.names[cid]
                 current_counts[class_name] += 1
@@ -164,14 +232,19 @@ try:
         for cls_name in all_classes:
             count_history[cls_name].append(current_counts.get(cls_name, 0))
 
-        annotated = res.plot()
-        annotated = draw_overlay(annotated, current_counts, frame_idx)
+        annotated = frame.copy()
+        annotated = draw_obb_fast(annotated, res)
+
+        now = time.time()
+        fps = 1.0 / max(now - prev_time, 1e-6)
+        prev_time = now
+
+        annotated = draw_live_overlay(annotated, current_counts, frame_idx, fps)
 
         last_annotated = annotated
-        cv2.imshow("SMARTCOUNT", annotated)
+        cv2.imshow("SMARTCOUNT", last_annotated)
 
-        key = cv2.waitKey(30) & 0xFF
-        if key == ord("q"):
+        if cv2.waitKey(1) & 0xFF == ord("q"):
             print("Finalizing...")
             break
 

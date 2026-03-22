@@ -228,54 +228,74 @@ def inject_css():
     )
 
 
-def compute_iou(box_a, box_b):
-    x1 = max(box_a[0], box_b[0])
-    y1 = max(box_a[1], box_b[1])
-    x2 = min(box_a[2], box_b[2])
-    y2 = min(box_a[3], box_b[3])
-
-    inter_w = max(0.0, x2 - x1)
-    inter_h = max(0.0, y2 - y1)
-    inter_area = inter_w * inter_h
-
-    area_a = max(0.0, box_a[2] - box_a[0]) * max(0.0, box_a[3] - box_a[1])
-    area_b = max(0.0, box_b[2] - box_b[0]) * max(0.0, box_b[3] - box_b[1])
-
-    union = area_a + area_b - inter_area
-    if union <= 0:
+def polygon_area(poly):
+    pts = np.asarray(poly, dtype=np.float32).reshape(-1, 2)
+    if len(pts) < 3:
         return 0.0
-
-    return inter_area / union
-
-
-def box_center(box):
-    x1, y1, x2, y2 = box
-    return ((x1 + x2) / 2.0, (y1 + y2) / 2.0)
+    return float(abs(cv2.contourArea(pts)))
 
 
-def center_distance(box_a, box_b):
-    ax, ay = box_center(box_a)
-    bx, by = box_center(box_b)
+def polygon_center(poly):
+    pts = np.asarray(poly, dtype=np.float32).reshape(-1, 2)
+    center = pts.mean(axis=0)
+    return float(center[0]), float(center[1])
+
+
+def center_distance(poly_a, poly_b):
+    ax, ay = polygon_center(poly_a)
+    bx, by = polygon_center(poly_b)
     return math.sqrt((ax - bx) ** 2 + (ay - by) ** 2)
 
 
-def box_size(box):
-    x1, y1, x2, y2 = box
+def polygon_bbox(poly):
+    pts = np.asarray(poly, dtype=np.float32).reshape(-1, 2)
+    xs = pts[:, 0]
+    ys = pts[:, 1]
+    return float(xs.min()), float(ys.min()), float(xs.max()), float(ys.max())
+
+
+def polygon_size(poly):
+    x1, y1, x2, y2 = polygon_bbox(poly)
     return max(0.0, x2 - x1), max(0.0, y2 - y1)
 
 
-def mean_box_size(detections):
+def mean_polygon_size(detections):
     if not detections:
         return 0.0, 0.0
 
     widths = []
     heights = []
-    for _, _, box in detections:
-        w, h = box_size(box)
+    for _, _, poly in detections:
+        w, h = polygon_size(poly)
         widths.append(w)
         heights.append(h)
 
     return float(np.mean(widths)), float(np.mean(heights))
+
+
+def compute_polygon_iou(poly_a, poly_b):
+    a = np.asarray(poly_a, dtype=np.float32).reshape(-1, 2)
+    b = np.asarray(poly_b, dtype=np.float32).reshape(-1, 2)
+
+    if len(a) < 3 or len(b) < 3:
+        return 0.0
+
+    area_a = polygon_area(a)
+    area_b = polygon_area(b)
+    if area_a <= 0 or area_b <= 0:
+        return 0.0
+
+    try:
+        inter_area, _ = cv2.intersectConvexConvex(a, b)
+    except cv2.error:
+        return 0.0
+
+    inter_area = float(inter_area)
+    union = area_a + area_b - inter_area
+    if union <= 0:
+        return 0.0
+
+    return inter_area / union
 
 
 def get_class_rules():
@@ -302,7 +322,7 @@ def suppress_duplicates_per_class(detections):
     for class_name, dets in by_class.items():
         dets = sorted(dets, key=lambda x: x[1], reverse=True)
 
-        avg_w, avg_h = mean_box_size(dets)
+        avg_w, avg_h = mean_polygon_size(dets)
         base_dist = max(avg_w, avg_h)
 
         rule = rules.get(class_name, {"iou": 0.15, "dist_factor": 0.80})
@@ -312,13 +332,13 @@ def suppress_duplicates_per_class(detections):
         selected = []
 
         for det in dets:
-            _, _, box = det
+            _, _, poly = det
             keep = True
 
             for kept_det in selected:
-                _, _, kept_box = kept_det
-                iou = compute_iou(box, kept_box)
-                dist = center_distance(box, kept_box)
+                _, _, kept_poly = kept_det
+                iou = compute_polygon_iou(poly, kept_poly)
+                dist = center_distance(poly, kept_poly)
 
                 if iou > iou_threshold or dist < min_center_dist:
                     keep = False
@@ -332,38 +352,29 @@ def suppress_duplicates_per_class(detections):
     return kept
 
 
+def ensure_obb_result(res):
+    if getattr(res, "obb", None) is None:
+        raise RuntimeError(
+            "This model output does not contain oriented detections."
+        )
+
+
 def get_detections_and_counts(res, conf_threshold=0.75):
+    ensure_obb_result(res)
+
     detections = []
 
-    if getattr(res, "obb", None) is not None and len(res.obb) > 0:
+    if len(res.obb) > 0:
         class_ids = res.obb.cls.cpu().numpy().astype(int)
         confs = res.obb.conf.cpu().numpy()
-        corners = res.obb.xyxyxyxy.cpu().numpy()
+        corners = res.obb.xyxyxyxy.cpu().numpy().astype(np.float32)
 
         for cid, conf, pts in zip(class_ids, confs, corners):
             if conf < conf_threshold:
                 continue
 
-            xs = pts[:, 0]
-            ys = pts[:, 1]
-            x1, y1 = float(xs.min()), float(ys.min())
-            x2, y2 = float(xs.max()), float(ys.max())
-
             class_name = res.names[cid]
-            detections.append((class_name, float(conf), [x1, y1, x2, y2]))
-
-    elif getattr(res, "boxes", None) is not None and len(res.boxes) > 0:
-        class_ids = res.boxes.cls.cpu().numpy().astype(int)
-        confs = res.boxes.conf.cpu().numpy()
-        boxes = res.boxes.xyxy.cpu().numpy()
-
-        for cid, conf, box in zip(class_ids, confs, boxes):
-            if conf < conf_threshold:
-                continue
-
-            x1, y1, x2, y2 = [float(v) for v in box]
-            class_name = res.names[cid]
-            detections.append((class_name, float(conf), [x1, y1, x2, y2]))
+            detections.append((class_name, float(conf), pts.copy()))
 
     filtered = suppress_duplicates_per_class(detections)
 
@@ -400,20 +411,24 @@ def get_class_colors():
     }
 
 
-def draw_filtered_boxes(image_rgb, filtered_detections):
+def draw_filtered_detections(image_rgb, filtered_detections):
     image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
     colors = get_class_colors()
 
     h, w = image_bgr.shape[:2]
-    font_scale = max(1.0, min(w, h) / 700)
+    font_scale = max(0.6, min(w, h) / 900)
     thickness = max(2, int(min(w, h) / 350))
     padding = max(4, int(min(w, h) / 250))
 
-    for class_name, conf, box in filtered_detections:
-        x1, y1, x2, y2 = [int(v) for v in box]
+    for class_name, conf, poly in filtered_detections:
+        pts = np.asarray(poly, dtype=np.int32).reshape((-1, 1, 2))
         color = colors.get(class_name, (0, 255, 0))
 
-        cv2.rectangle(image_bgr, (x1, y1), (x2, y2), color, thickness)
+        cv2.polylines(image_bgr, [pts], isClosed=True, color=color, thickness=thickness)
+
+        x1, y1, _, _ = polygon_bbox(poly)
+        x1 = int(x1)
+        y1 = int(y1)
 
         label = f"{class_name} {conf:.2f}"
         (tw, th), _ = cv2.getTextSize(
@@ -508,7 +523,7 @@ def show_counts(counts):
         )
 
     st.markdown(
-        '<div class="note">These counts are based on filtered boxes, not raw model detections.</div>',
+        '<div class="note">These counts are based on filtered detections, not raw model detections.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
@@ -605,7 +620,6 @@ def show_history_table():
 
     rows = list(reversed(rows))
 
-    # ---------- filters ----------
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Scan History</div>', unsafe_allow_html=True)
 
@@ -628,12 +642,10 @@ def show_history_table():
     with c3:
         search_text = st.text_input("Search item in Count Breakdown", "")
 
-    # ---------- enrich rows ----------
     enriched_rows = []
     for row in rows:
         low_stock_items = row.get("low_stock_items", "None")
         counts_json = row.get("counts_json", "")
-
         status = "Low Stock" if low_stock_items != "None" else "OK"
 
         enriched_rows.append({
@@ -646,7 +658,6 @@ def show_history_table():
             "status": status,
         })
 
-    # ---------- apply filters ----------
     filtered_rows = []
     for row in enriched_rows:
         if source_filter != "All" and row["source"] != source_filter:
@@ -655,13 +666,11 @@ def show_history_table():
         if status_filter != "All" and row["status"] != status_filter:
             continue
 
-        if search_text.strip():
-            if search_text.lower() not in row["counts_json"].lower():
-                continue
+        if search_text.strip() and search_text.lower() not in row["counts_json"].lower():
+            continue
 
         filtered_rows.append(row)
 
-    # ---------- summary cards ----------
     total_scans = len(filtered_rows)
     latest_source = filtered_rows[0]["source"] if filtered_rows else "-"
     latest_total = filtered_rows[0]["total_items"] if filtered_rows else "-"
@@ -713,7 +722,6 @@ def show_history_table():
             unsafe_allow_html=True
         )
 
-    # ---------- build table ----------
     row_html = ""
     for row in filtered_rows[:20]:
         status_badge = (
@@ -855,6 +863,18 @@ def render_header():
     )
 
 
+def run_prediction(model, image_rgb, conf_thres, imgsz):
+    res = model.predict(
+        image_rgb,
+        conf=conf_thres,
+        imgsz=imgsz,
+        verbose=False
+    )[0]
+
+    ensure_obb_result(res)
+    return res
+
+
 def render(go_to):
     inject_css()
     render_header()
@@ -877,7 +897,7 @@ def render(go_to):
         imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
 
     st.markdown(
-        '<div class="note">Choose a higher threshold to reduce duplicates, or a lower threshold to catch more objects.</div>',
+        '<div class="note">Detection mode is enabled for your trained model output.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
@@ -905,26 +925,23 @@ def render(go_to):
         )
 
         if uploaded_file is not None:
-            image = Image.open(uploaded_file).convert("RGB")
-            st.image(image, caption="Uploaded Image", width=1200)
+            try:
+                image = Image.open(uploaded_file).convert("RGB")
+                st.image(image, caption="Uploaded Image", width=1200)
 
-            image_np = np.array(image)
+                image_np = np.array(image)
+                res = run_prediction(model, image_np, conf_thres, imgsz)
 
-            res = model.predict(
-                image_np,
-                conf=conf_thres,
-                imgsz=imgsz,
-                verbose=False
-            )[0]
+                filtered, counts = get_detections_and_counts(res, conf_thres)
+                annotated = draw_filtered_detections(image_np, filtered)
 
-            filtered, counts = get_detections_and_counts(res, conf_thres)
-            annotated = draw_filtered_boxes(image_np, filtered)
-
-            st.image(annotated, caption="Prediction Result", width=1200)
-            show_counts(counts)
-            show_alerts(counts)
-            show_counts_chart(counts)
-            save_history(counts, "Image")
+                st.image(annotated, caption="Prediction Result", width=1200)
+                show_counts(counts)
+                show_alerts(counts)
+                show_counts_chart(counts)
+                save_history(counts, "Image")
+            except Exception as e:
+                st.error(f"Processing failed: {e}")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -946,56 +963,53 @@ def render(go_to):
             st.video(video_path)
 
             if st.button("Process Video", use_container_width=True):
-                cap = cv2.VideoCapture(video_path)
-                all_counts = defaultdict(list)
-                frame_idx = 0
+                try:
+                    cap = cv2.VideoCapture(video_path)
+                    all_counts = defaultdict(list)
+                    frame_idx = 0
 
-                preview = st.empty()
-                progress_bar = st.progress(0, text="Processing video...")
+                    preview = st.empty()
+                    progress_bar = st.progress(0, text="Processing video...")
 
-                total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                total_frames = max(total_frames, 1)
+                    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                    total_frames = max(total_frames, 1)
 
-                while True:
-                    ret, frame = cap.read()
-                    if not ret:
-                        break
+                    while True:
+                        ret, frame = cap.read()
+                        if not ret:
+                            break
 
-                    frame_idx += 1
+                        frame_idx += 1
 
-                    if frame_idx % 5 != 0:
-                        continue
+                        if frame_idx % 5 != 0:
+                            continue
 
-                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                        res = run_prediction(model, frame_rgb, conf_thres, imgsz)
 
-                    res = model.predict(
-                        frame_rgb,
-                        conf=conf_thres,
-                        imgsz=imgsz,
-                        verbose=False
-                    )[0]
+                        filtered, counts = get_detections_and_counts(res, conf_thres)
 
-                    filtered, counts = get_detections_and_counts(res, conf_thres)
+                        for cls in set(all_counts.keys()) | set(counts.keys()):
+                            all_counts[cls].append(counts.get(cls, 0))
 
-                    for cls in set(all_counts.keys()) | set(counts.keys()):
-                        all_counts[cls].append(counts.get(cls, 0))
+                        annotated = draw_filtered_detections(frame_rgb, filtered)
+                        preview.image(annotated, width=1200)
 
-                    annotated = draw_filtered_boxes(frame_rgb, filtered)
-                    preview.image(annotated, width=1200)
+                        progress_value = min(frame_idx / total_frames, 1.0)
+                        progress_bar.progress(progress_value, text=f"Processing frame {frame_idx}...")
 
-                    progress_value = min(frame_idx / total_frames, 1.0)
-                    progress_bar.progress(progress_value, text=f"Processing frame {frame_idx}...")
+                    cap.release()
 
-                cap.release()
+                    final_counts = stable_video_count(all_counts)
+                    progress_bar.empty()
 
-                final_counts = stable_video_count(all_counts)
-                progress_bar.empty()
-
-                st.success("Video processing completed.")
-                show_counts(final_counts)
-                show_alerts(final_counts)
-                show_counts_chart(final_counts)
-                save_history(final_counts, "Video")
+                    st.success("Video processing completed.")
+                    show_counts(final_counts)
+                    show_alerts(final_counts)
+                    show_counts_chart(final_counts)
+                    save_history(final_counts, "Video")
+                except Exception as e:
+                    st.error(f"Video processing failed: {e}")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
