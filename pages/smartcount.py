@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 from ultralytics import YOLO
 from PIL import Image
 from collections import defaultdict
@@ -9,9 +10,13 @@ import math
 import subprocess
 import sys
 import os
+import csv
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 MODEL_PATH = "my_model.pt"
 WEBCAM_SCRIPT = "smartcount.py"
+HISTORY_CSV = "smartcount_history.csv"
 
 
 @st.cache_resource
@@ -87,12 +92,6 @@ def inject_css():
             font-weight: 800;
             color: #0B2A4A;
             margin-bottom: 12px;
-        }
-
-        .panel-sub {
-            color: #64748B;
-            font-size: 0.95rem;
-            line-height: 1.6;
         }
 
         .stat-card {
@@ -222,10 +221,6 @@ def inject_css():
 
         div[role="radiogroup"] label:hover {
             border-color: #2F6FA3;
-        }
-
-        .stSlider, .stSelectSlider, .stFileUploader {
-            padding-top: 4px;
         }
         </style>
         """,
@@ -545,6 +540,199 @@ def show_alerts(counts):
     st.markdown('</div>', unsafe_allow_html=True)
 
 
+def save_history(counts, source_type):
+    total_items = sum(counts.values())
+    low_stock_items = [item for item, count in counts.items() if count < 3]
+
+    row = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "source": source_type,
+        "total_items": total_items,
+        "classes_detected": len(counts),
+        "low_stock_items": ", ".join(low_stock_items) if low_stock_items else "None",
+        "counts_json": "; ".join([f"{k}: {v}" for k, v in sorted(counts.items())]),
+    }
+
+    file_exists = os.path.exists(HISTORY_CSV)
+
+    with open(HISTORY_CSV, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=list(row.keys()))
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
+
+
+def show_counts_chart(counts):
+    if not counts:
+        return
+
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title">Counts Chart</div>', unsafe_allow_html=True)
+
+    items = list(counts.keys())
+    values = list(counts.values())
+
+    fig, ax = plt.subplots(figsize=(10, 4.5))
+    ax.bar(items, values)
+    ax.set_ylabel("Count")
+    ax.set_xlabel("Item")
+    ax.set_title("Detected Item Counts")
+    plt.xticks(rotation=30, ha="right")
+    plt.tight_layout()
+
+    st.pyplot(fig)
+    plt.close(fig)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
+def read_history_rows():
+    if not os.path.exists(HISTORY_CSV):
+        return []
+
+    rows = []
+    with open(HISTORY_CSV, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rows.append(row)
+    return rows
+
+
+def show_history_table():
+    rows = read_history_rows()
+    if not rows:
+        return
+
+    rows = list(reversed(rows))
+
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.markdown('<div class="panel-title">Scan History</div>', unsafe_allow_html=True)
+
+    row_html = ""
+    for row in rows[:20]:
+        timestamp = row.get("timestamp", "")
+        source = row.get("source", "")
+        total_items = row.get("total_items", "")
+        classes_detected = row.get("classes_detected", "")
+        low_stock_items = row.get("low_stock_items", "")
+        counts_json = row.get("counts_json", "")
+
+        row_html += f"""
+            <tr>
+                <td>{timestamp}</td>
+                <td>{source}</td>
+                <td>{classes_detected}</td>
+                <td>{counts_json}</td>
+                <td>{total_items}</td>
+                <td>{low_stock_items}</td>
+            </tr>
+        """
+
+    table_html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{
+                margin: 0;
+                padding: 0;
+                background: transparent;
+                font-family: Arial, sans-serif;
+            }}
+
+            .history-table {{
+                width: 100%;
+                border-collapse: separate;
+                border-spacing: 0;
+                overflow: hidden;
+                border-radius: 14px;
+            }}
+
+            .history-table th {{
+                background: linear-gradient(90deg, #1e3c72, #2a5298);
+                color: white;
+                text-align: center;
+                padding: 12px;
+                font-size: 0.95rem;
+                position: sticky;
+                top: 0;
+            }}
+
+            .history-table th:first-child {{
+                border-top-left-radius: 12px;
+            }}
+
+            .history-table th:last-child {{
+                border-top-right-radius: 12px;
+            }}
+
+            .history-table td {{
+                padding: 12px;
+                border-top: 1px solid #e5edf5;
+                color: #334155;
+                font-size: 0.94rem;
+                text-align: center;
+                background: white;
+                vertical-align: middle;
+            }}
+
+            .history-table tr:nth-child(even) td {{
+                background: #fafcff;
+            }}
+
+            .history-table tr:hover td {{
+                background: #f5f7fa;
+            }}
+
+            .history-table td:nth-child(4) {{
+                text-align: left;
+                white-space: normal;
+                word-break: break-word;
+                min-width: 220px;
+            }}
+
+            .history-table td:nth-child(6) {{
+                white-space: normal;
+                word-break: break-word;
+                min-width: 180px;
+            }}
+        </style>
+    </head>
+    <body>
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Source</th>
+                    <th>Class Detected</th>
+                    <th>Count Breakdown</th>
+                    <th>Total Items</th>
+                    <th>Low Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {row_html}
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
+
+    table_height = 70 + min(len(rows[:20]), 20) * 52
+    components.html(table_html, height=table_height, scrolling=True)
+
+    with open(HISTORY_CSV, "rb") as f:
+        st.download_button(
+            "Download History CSV",
+            data=f.read(),
+            file_name="smartcount_history.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+
 def render_header():
     st.markdown(
         """
@@ -627,6 +815,8 @@ def render(go_to):
             st.image(annotated, caption="Prediction Result", width=1200)
             show_counts(counts)
             show_alerts(counts)
+            show_counts_chart(counts)
+            save_history(counts, "Image")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -696,6 +886,8 @@ def render(go_to):
                 st.success("Video processing completed.")
                 show_counts(final_counts)
                 show_alerts(final_counts)
+                show_counts_chart(final_counts)
+                save_history(final_counts, "Video")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -717,3 +909,5 @@ def render(go_to):
             launch_webcam_script()
 
         st.markdown('</div>', unsafe_allow_html=True)
+
+    show_history_table()

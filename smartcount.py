@@ -1,8 +1,6 @@
 from ultralytics import YOLO
 from collections import defaultdict
 from datetime import datetime
-import sqlite3
-import statistics
 import cv2
 import csv
 import os
@@ -11,37 +9,13 @@ import os
 # SETTINGS
 # =====================================
 MODEL_PATH = "my_model.pt"
-DB_PATH = "smartcount.db"
-CSV_PATH = "inventory_reports.csv"
+HISTORY_CSV = "smartcount_history.csv"
 CAMERA_INDEX = 0
-CAMERA_NAME = "cam_1"
 
 CONF_THRES = 0.7
 IMGSZ = 640
 FRAME_SKIP = 2
 MIN_SEEN_FRAMES = 2
-
-# =====================================
-# DATABASE SETUP
-# =====================================
-session_id = datetime.now().strftime("run_%Y%m%d_%H%M%S")
-
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
-
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS inventory_reports (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    event_time TEXT NOT NULL,
-    session_id TEXT NOT NULL,
-    class_name TEXT NOT NULL,
-    final_count INTEGER NOT NULL,
-    method TEXT NOT NULL,
-    camera_name TEXT NOT NULL
-)
-""")
-
-conn.commit()
 
 # =====================================
 # LOAD MODEL
@@ -56,7 +30,6 @@ print("Model loaded")
 print("Opening camera...")
 cap = cv2.VideoCapture(CAMERA_INDEX)
 if not cap.isOpened():
-    conn.close()
     raise FileNotFoundError("Could not open camera.")
 print("Camera opened")
 
@@ -110,56 +83,29 @@ def stable_count(values):
     return int(round(nonzero[idx]))
 
 
-def save_final_report(final_counts):
-    event_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    for cls_name, count in final_counts.items():
-        cursor.execute("""
-            INSERT INTO inventory_reports (
-                event_time, session_id, class_name,
-                final_count, method, camera_name
-            ) VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            event_time,
-            session_id,
-            cls_name,
-            int(count),
-            "manual_finish_percentile",
-            CAMERA_NAME
-        ))
-
-    conn.commit()
-
-
-def append_final_csv(final_counts):
-    filepath = os.path.join(os.getcwd(), CSV_PATH)
+def save_history(final_counts, source_type="Webcam"):
+    filepath = os.path.join(os.getcwd(), HISTORY_CSV)
     file_exists = os.path.exists(filepath)
-    event_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    total_items = sum(final_counts.values())
+    low_stock_items = [name for name, count in final_counts.items() if count < 3]
+
+    row = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "source": source_type,
+        "total_items": total_items,
+        "classes_detected": len(final_counts),
+        "low_stock_items": ", ".join(low_stock_items) if low_stock_items else "None",
+        "counts_json": "; ".join([f"{k}: {v}" for k, v in sorted(final_counts.items())]),
+    }
 
     with open(filepath, "a", newline="", encoding="utf-8") as f:
-        writer = csv.writer(f)
-
+        writer = csv.DictWriter(f, fieldnames=list(row.keys()))
         if not file_exists:
-            writer.writerow([
-                "event_time",
-                "session_id",
-                "class_name",
-                "final_count",
-                "method",
-                "camera_name"
-            ])
+            writer.writeheader()
+        writer.writerow(row)
 
-        for cls_name, count in sorted(final_counts.items()):
-            writer.writerow([
-                event_time,
-                session_id,
-                cls_name,
-                int(count),
-                "manual_finish_percentile",
-                CAMERA_NAME
-            ])
-
-    print("Updated CSV:", filepath)
+    print("Saved to:", filepath)
 
 # =====================================
 # MAIN LOOP
@@ -198,8 +144,14 @@ try:
 
         current_counts = defaultdict(int)
 
-        if res.obb is not None and len(res.obb) > 0:
+        if getattr(res, "obb", None) is not None and len(res.obb) > 0:
             class_ids = res.obb.cls.cpu().numpy().astype(int)
+            for cid in class_ids:
+                class_name = res.names[cid]
+                current_counts[class_name] += 1
+
+        elif getattr(res, "boxes", None) is not None and len(res.boxes) > 0:
+            class_ids = res.boxes.cls.cpu().numpy().astype(int)
             for cid in class_ids:
                 class_name = res.names[cid]
                 current_counts[class_name] += 1
@@ -234,8 +186,7 @@ finally:
             if estimate > 0:
                 final_counts[cls_name] = estimate
 
-    save_final_report(final_counts)
-    append_final_csv(final_counts)
+    save_history(final_counts, "Webcam")
 
     print("\nFinal inventory:")
     if final_counts:
@@ -244,6 +195,3 @@ finally:
         print("TOTAL:", sum(final_counts.values()))
     else:
         print("No items found.")
-
-    conn.close()
-    print("Saved to database:", DB_PATH)
