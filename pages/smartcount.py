@@ -239,7 +239,7 @@ def ensure_obb_result(res):
         raise RuntimeError("This model output does not contain oriented detections.")
 
 
-def get_detections_and_counts(res, conf_threshold=0.50):
+def get_detections_and_counts(res, conf_threshold=0.70):
     """
     Use raw OBB detections only.
     No extra duplicate suppression.
