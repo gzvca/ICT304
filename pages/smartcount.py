@@ -6,7 +6,6 @@ from collections import defaultdict
 import numpy as np
 import tempfile
 import cv2
-import math
 import subprocess
 import sys
 import os
@@ -228,25 +227,6 @@ def inject_css():
     )
 
 
-def polygon_area(poly):
-    pts = np.asarray(poly, dtype=np.float32).reshape(-1, 2)
-    if len(pts) < 3:
-        return 0.0
-    return float(abs(cv2.contourArea(pts)))
-
-
-def polygon_center(poly):
-    pts = np.asarray(poly, dtype=np.float32).reshape(-1, 2)
-    center = pts.mean(axis=0)
-    return float(center[0]), float(center[1])
-
-
-def center_distance(poly_a, poly_b):
-    ax, ay = polygon_center(poly_a)
-    bx, by = polygon_center(poly_b)
-    return math.sqrt((ax - bx) ** 2 + (ay - by) ** 2)
-
-
 def polygon_bbox(poly):
     pts = np.asarray(poly, dtype=np.float32).reshape(-1, 2)
     xs = pts[:, 0]
@@ -254,115 +234,20 @@ def polygon_bbox(poly):
     return float(xs.min()), float(ys.min()), float(xs.max()), float(ys.max())
 
 
-def polygon_size(poly):
-    x1, y1, x2, y2 = polygon_bbox(poly)
-    return max(0.0, x2 - x1), max(0.0, y2 - y1)
-
-
-def mean_polygon_size(detections):
-    if not detections:
-        return 0.0, 0.0
-
-    widths = []
-    heights = []
-    for _, _, poly in detections:
-        w, h = polygon_size(poly)
-        widths.append(w)
-        heights.append(h)
-
-    return float(np.mean(widths)), float(np.mean(heights))
-
-
-def compute_polygon_iou(poly_a, poly_b):
-    a = np.asarray(poly_a, dtype=np.float32).reshape(-1, 2)
-    b = np.asarray(poly_b, dtype=np.float32).reshape(-1, 2)
-
-    if len(a) < 3 or len(b) < 3:
-        return 0.0
-
-    area_a = polygon_area(a)
-    area_b = polygon_area(b)
-    if area_a <= 0 or area_b <= 0:
-        return 0.0
-
-    try:
-        inter_area, _ = cv2.intersectConvexConvex(a, b)
-    except cv2.error:
-        return 0.0
-
-    inter_area = float(inter_area)
-    union = area_a + area_b - inter_area
-    if union <= 0:
-        return 0.0
-
-    return inter_area / union
-
-
-def get_class_rules():
-    return {
-        "Sweets": {"iou": 0.10, "dist_factor": 1.0},
-        "Oranges": {"iou": 0.12, "dist_factor": 1.1},
-        "Apples": {"iou": 0.10, "dist_factor": 0.90},
-        "Soft Drinks": {"iou": 0.15, "dist_factor": 1.1},
-        "Packet Drinks": {"iou": 0.15, "dist_factor": 0.80},
-        "Bread": {"iou": 0.15, "dist_factor": 0.75},
-        "Noodles": {"iou": 0.15, "dist_factor": 0.85},
-        "Chips": {"iou": 0.18, "dist_factor": 0.85},
-    }
-
-
-def suppress_duplicates_per_class(detections):
-    by_class = defaultdict(list)
-    for det in detections:
-        by_class[det[0]].append(det)
-
-    kept = []
-    rules = get_class_rules()
-
-    for class_name, dets in by_class.items():
-        dets = sorted(dets, key=lambda x: x[1], reverse=True)
-
-        avg_w, avg_h = mean_polygon_size(dets)
-        base_dist = max(avg_w, avg_h)
-
-        rule = rules.get(class_name, {"iou": 0.15, "dist_factor": 0.80})
-        iou_threshold = rule["iou"]
-        min_center_dist = base_dist * rule["dist_factor"]
-
-        selected = []
-
-        for det in dets:
-            _, _, poly = det
-            keep = True
-
-            for kept_det in selected:
-                _, _, kept_poly = kept_det
-                iou = compute_polygon_iou(poly, kept_poly)
-                dist = center_distance(poly, kept_poly)
-
-                if iou > iou_threshold or dist < min_center_dist:
-                    keep = False
-                    break
-
-            if keep:
-                selected.append(det)
-
-        kept.extend(selected)
-
-    return kept
-
-
 def ensure_obb_result(res):
     if getattr(res, "obb", None) is None:
-        raise RuntimeError(
-            "This model output does not contain oriented detections."
-        )
+        raise RuntimeError("This model output does not contain oriented detections.")
 
 
-def get_detections_and_counts(res, conf_threshold=0.75):
+def get_detections_and_counts(res, conf_threshold=0.50):
+    """
+    Use raw OBB detections only.
+    No extra duplicate suppression.
+    """
     ensure_obb_result(res)
 
     detections = []
+    class_counts = defaultdict(int)
 
     if len(res.obb) > 0:
         class_ids = res.obb.cls.cpu().numpy().astype(int)
@@ -375,14 +260,9 @@ def get_detections_and_counts(res, conf_threshold=0.75):
 
             class_name = res.names[cid]
             detections.append((class_name, float(conf), pts.copy()))
+            class_counts[class_name] += 1
 
-    filtered = suppress_duplicates_per_class(detections)
-
-    class_counts = defaultdict(int)
-    for class_name, _, _ in filtered:
-        class_counts[class_name] += 1
-
-    return filtered, dict(class_counts)
+    return detections, dict(class_counts)
 
 
 def stable_video_count(all_counts):
@@ -411,7 +291,7 @@ def get_class_colors():
     }
 
 
-def draw_filtered_detections(image_rgb, filtered_detections):
+def draw_filtered_detections(image_rgb, detections):
     image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
     colors = get_class_colors()
 
@@ -420,7 +300,7 @@ def draw_filtered_detections(image_rgb, filtered_detections):
     thickness = max(2, int(min(w, h) / 350))
     padding = max(4, int(min(w, h) / 250))
 
-    for class_name, conf, poly in filtered_detections:
+    for class_name, conf, poly in detections:
         pts = np.asarray(poly, dtype=np.int32).reshape((-1, 1, 2))
         color = colors.get(class_name, (0, 255, 0))
 
@@ -523,7 +403,7 @@ def show_counts(counts):
         )
 
     st.markdown(
-        '<div class="note">These counts are based on filtered detections, not raw model detections.</div>',
+        '<div class="note">These counts are based on raw detections after confidence filtering.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
@@ -892,7 +772,7 @@ def render(go_to):
 
     c1, c2 = st.columns(2)
     with c1:
-        conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.75, 0.05)
+        conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.40, 0.05)
     with c2:
         imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
 
@@ -932,8 +812,8 @@ def render(go_to):
                 image_np = np.array(image)
                 res = run_prediction(model, image_np, conf_thres, imgsz)
 
-                filtered, counts = get_detections_and_counts(res, conf_thres)
-                annotated = draw_filtered_detections(image_np, filtered)
+                detections, counts = get_detections_and_counts(res, conf_thres)
+                annotated = draw_filtered_detections(image_np, detections)
 
                 st.image(annotated, caption="Prediction Result", width=1200)
                 show_counts(counts)
@@ -981,18 +861,15 @@ def render(go_to):
 
                         frame_idx += 1
 
-                        if frame_idx % 5 != 0:
-                            continue
-
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         res = run_prediction(model, frame_rgb, conf_thres, imgsz)
 
-                        filtered, counts = get_detections_and_counts(res, conf_thres)
+                        detections, counts = get_detections_and_counts(res, conf_thres)
 
                         for cls in set(all_counts.keys()) | set(counts.keys()):
                             all_counts[cls].append(counts.get(cls, 0))
 
-                        annotated = draw_filtered_detections(frame_rgb, filtered)
+                        annotated = draw_filtered_detections(frame_rgb, detections)
                         preview.image(annotated, width=1200)
 
                         progress_value = min(frame_idx / total_frames, 1.0)

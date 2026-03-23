@@ -14,9 +14,10 @@ MODEL_PATH = "my_model.pt"
 HISTORY_CSV = "smartcount_history.csv"
 CAMERA_INDEX = 0
 
-CONF_THRES = 0.70
-IMGRES = 640
-FRAME_SKIP = 1
+CONF_THRES = 0.75
+IMGRES = 320
+FRAME_SKIP = 2
+MIN_SEEN_FRAMES = 2
 
 SHOW_LABELS = True
 SHOW_CONF = True
@@ -89,6 +90,10 @@ def draw_live_overlay(frame, class_counts, frame_idx, fps_value):
 
 
 def draw_obb_fast(frame, res):
+    """
+    Draw oriented bounding boxes manually.
+    This avoids falling back to normal boxes.
+    """
     if getattr(res, "obb", None) is None:
         raise RuntimeError("This model/output does not provide OBB results.")
 
@@ -96,14 +101,12 @@ def draw_obb_fast(frame, res):
         return frame
 
     names = res.names
-    corners = res.obb.xyxyxyxy.cpu().numpy().astype(int)
+
+    corners = res.obb.xyxyxyxy.cpu().numpy().astype(int)   # shape: (N, 4, 2)
     cls_ids = res.obb.cls.cpu().numpy().astype(int)
     confs = res.obb.conf.cpu().numpy()
 
     for pts, cid, conf in zip(corners, cls_ids, confs):
-        if conf < CONF_THRES:
-            continue
-
         pts = pts.reshape((-1, 1, 2))
         cv2.polylines(frame, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
 
@@ -128,6 +131,16 @@ def draw_obb_fast(frame, res):
             )
 
     return frame
+
+
+def stable_count(values):
+    nonzero = [v for v in values if v > 0]
+    if not nonzero:
+        return 0
+
+    nonzero.sort()
+    idx = int(0.75 * (len(nonzero) - 1))
+    return int(round(nonzero[idx]))
 
 
 def save_history(final_counts, source_type="Webcam"):
@@ -161,8 +174,9 @@ def save_history(final_counts, source_type="Webcam"):
 print("Running detection... press 'q' when ready to finalize")
 
 frame_idx = 0
+count_history = defaultdict(list)
+seen_frames = defaultdict(int)
 last_annotated = None
-last_counts = {}
 
 fps = 0.0
 prev_time = time.time()
@@ -194,24 +208,29 @@ try:
             device=DEVICE,
         )[0]
 
+        # Force OBB: never fall back to normal boxes
         if not obb_checked:
             obb_checked = True
             if getattr(res, "obb", None) is None:
                 raise RuntimeError(
-                    "This script expects OBB output, but the model does not return OBB results."
+                    "Forced OBB mode is enabled, but this model does not output OBB results."
                 )
 
         current_counts = defaultdict(int)
 
         if len(res.obb) > 0:
             class_ids = res.obb.cls.cpu().numpy().astype(int)
-            confs = res.obb.conf.cpu().numpy()
-
-            for cid, conf in zip(class_ids, confs):
-                if conf < CONF_THRES:
-                    continue
+            for cid in class_ids:
                 class_name = res.names[cid]
                 current_counts[class_name] += 1
+
+        for cls_name, count in current_counts.items():
+            if count > 0:
+                seen_frames[cls_name] += 1
+
+        all_classes = set(count_history.keys()) | set(current_counts.keys())
+        for cls_name in all_classes:
+            count_history[cls_name].append(current_counts.get(cls_name, 0))
 
         annotated = frame.copy()
         annotated = draw_obb_fast(annotated, res)
@@ -223,8 +242,6 @@ try:
         annotated = draw_live_overlay(annotated, current_counts, frame_idx, fps)
 
         last_annotated = annotated
-        last_counts = dict(current_counts)
-
         cv2.imshow("SMARTCOUNT", last_annotated)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -235,7 +252,12 @@ finally:
     cap.release()
     cv2.destroyAllWindows()
 
-    final_counts = {k: v for k, v in last_counts.items() if v > 0}
+    final_counts = {}
+    for cls_name, values in count_history.items():
+        if seen_frames[cls_name] >= MIN_SEEN_FRAMES:
+            estimate = stable_count(values)
+            if estimate > 0:
+                final_counts[cls_name] = estimate
 
     save_history(final_counts, "Webcam")
 
