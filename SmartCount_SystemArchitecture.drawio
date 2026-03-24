@@ -1,0 +1,122 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.3.8">
+  <diagram name="Page-1" id="GP6aqL2riT_x5DfGtU4Z">
+    <mxGraphModel dx="897" dy="921" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Xcv6OcifotkYcazOtUOE-3" edge="1" parent="1" source="Xcv6OcifotkYcazOtUOE-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Xcv6OcifotkYcazOtUOE-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-1" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b style=&quot;&quot;&gt;USER INPUTS&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Image Upload/Video Upload/Webcam&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- User Settings (Confidence, Image Size)&lt;/span&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="80" width="250" x="170" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-5" edge="1" parent="1" source="Xcv6OcifotkYcazOtUOE-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Xcv6OcifotkYcazOtUOE-4" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-2" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b style=&quot;&quot;&gt;INPUT PROCESSING MODULE&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Frame extraction (video/webcam)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Image normalization (RGB conversion)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Resolution adjustment&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="250" x="170" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-9" edge="1" parent="1" source="Xcv6OcifotkYcazOtUOE-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Xcv6OcifotkYcazOtUOE-8" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-4" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b&gt;SMARTCOUNT AI SUBSYSTEM&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;YOLO OBB MODEL&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Object Detection (OBB polygons)&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Confidence Filtering&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Detection and Counting&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Video Stabilisation (multi-frame logic)&lt;/span&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="130" width="250" x="170" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-7" parent="1" style="line;strokeWidth=1;fillColor=none;align=left;verticalAlign=middle;spacingTop=-1;spacingLeft=3;spacingRight=3;rotatable=0;labelPosition=right;points=[];portConstraint=eastwest;strokeColor=inherit;" value="" vertex="1">
+          <mxGeometry height="8" width="210" x="190" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-14" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="610" />
+              <mxPoint x="360" y="610" />
+            </Array>
+            <mxPoint x="360" y="600" as="sourcePoint" />
+            <mxPoint x="360.0000000000001" y="620" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-15" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.72;entryY=-0.011;entryDx=0;entryDy=0;entryPerimeter=0;" target="Xcv6OcifotkYcazOtUOE-10" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="230" y="600" as="sourcePoint" />
+            <mxPoint x="229.03703703703695" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-8" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b&gt;STRUCTURED DATA OUTPUT&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Detected Objects (polygons)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Counts per Class&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Total Inventory Count&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="250" x="170" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-10" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b&gt;VISUALIZATION MODULE&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Draw OBB polygons&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Labels + confidence&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Annotated output&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="180" x="100" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-11" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b&gt;REPORT SUBSYSTEM (Non-AI)&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Save to CSV&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Generate Alerts&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Count Analysis&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- History Tracking&lt;/span&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="90" width="190" x="300" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-18" parent="1" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin: 4px 0px 0px; text-align: center;&quot;&gt;&lt;b&gt;USER INTERFACE&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- Display annotataed results(image/video/webcam)&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Inventory counts &amp;amp; visual analytics&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Alerts (low stock)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- History table (search &amp;amp; filter)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;- Export/download reports&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:8px;&quot;&gt;&lt;br&gt;&lt;/p&gt;" vertex="1">
+          <mxGeometry height="120" width="280" x="155" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-21" parent="1" style="text;align=center;fontStyle=1;verticalAlign=middle;spacingLeft=3;spacingRight=3;strokeColor=none;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;html=1;" value="&lt;h1&gt;SmartCount System Architecture&lt;/h1&gt;" vertex="1">
+          <mxGeometry height="26" width="80" x="255" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-27" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="190" y="580" as="sourcePoint" />
+            <mxPoint x="390" y="580" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-28" connectable="0" parent="Xcv6OcifotkYcazOtUOE-27" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;b&gt;SYSTEM OUTPUT&lt;/b&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0172" as="geometry">
+            <mxPoint x="7" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-30" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="230" y="600" as="sourcePoint" />
+            <mxPoint x="360" y="600" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-31" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="290" y="590" />
+            </Array>
+            <mxPoint x="290" y="600" as="sourcePoint" />
+            <mxPoint x="290" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-32" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="230" y="730" as="sourcePoint" />
+            <mxPoint x="360" y="730" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-33" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.732;entryY=-0.012;entryDx=0;entryDy=0;entryPerimeter=0;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="290" y="731" as="sourcePoint" />
+            <mxPoint x="290" y="750" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-34" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="230" y="720" />
+              <mxPoint x="230" y="710" />
+            </Array>
+            <mxPoint x="230" y="730" as="sourcePoint" />
+            <mxPoint x="230" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Xcv6OcifotkYcazOtUOE-35" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="720" />
+              <mxPoint x="360" y="710" />
+            </Array>
+            <mxPoint x="360" y="730" as="sourcePoint" />
+            <mxPoint x="360" y="720" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

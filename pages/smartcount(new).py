@@ -17,6 +17,13 @@ MODEL_PATH = "my_model.pt"
 WEBCAM_SCRIPT = "smartcount.py"
 HISTORY_CSV = "smartcount_history.csv"
 
+# Video tuning
+VIDEO_FRAME_SKIP = 5
+VIDEO_PREVIEW_SKIP = 12
+VIDEO_RESIZE_WIDTH = 640
+VIDEO_RESIZE_HEIGHT = 480
+MAX_TEST_FRAMES = 300
+
 
 @st.cache_resource
 def load_model():
@@ -239,11 +246,7 @@ def ensure_obb_result(res):
         raise RuntimeError("This model output does not contain oriented detections.")
 
 
-def get_detections_and_counts(res, conf_threshold=0.70):
-    """
-    Use raw OBB detections only.
-    No extra duplicate suppression.
-    """
+def get_detections_and_counts(res, conf_threshold):
     ensure_obb_result(res)
 
     detections = []
@@ -269,11 +272,15 @@ def stable_video_count(all_counts):
     final_counts = {}
 
     for cls_name, values in all_counts.items():
-        nonzero = [v for v in values if v > 0]
-        if nonzero:
-            nonzero.sort()
-            idx = int(0.75 * (len(nonzero) - 1))
-            final_counts[cls_name] = int(round(nonzero[idx]))
+        if not values:
+            continue
+
+        values = sorted(values)
+        mid = len(values) // 2
+        if len(values) % 2 == 1:
+            final_counts[cls_name] = int(values[mid])
+        else:
+            final_counts[cls_name] = int(round((values[mid - 1] + values[mid]) / 2))
 
     return final_counts
 
@@ -744,15 +751,105 @@ def render_header():
 
 
 def run_prediction(model, image_rgb, conf_thres, imgsz):
+    use_half = False
+    try:
+        model_device = str(model.device).lower()
+        if "cuda" in model_device:
+            use_half = True
+    except Exception:
+        use_half = False
+
     res = model.predict(
         image_rgb,
         conf=conf_thres,
         imgsz=imgsz,
-        verbose=False
+        verbose=False,
+        half=use_half
     )[0]
 
     ensure_obb_result(res)
     return res
+
+
+def process_video_file(
+    model,
+    video_path,
+    conf_thres,
+    imgsz,
+    show_preview=True,
+    max_frames=MAX_TEST_FRAMES
+):
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        raise RuntimeError("Could not open uploaded video.")
+
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    total_frames = max(total_frames, 1)
+
+    all_counts = defaultdict(list)
+    frame_idx = 0
+    processed_frames = 0
+
+    preview = st.empty()
+    status_text = st.empty()
+    progress_bar = st.progress(0, text="Starting video processing...")
+
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame_idx += 1
+
+            if max_frames and frame_idx > max_frames:
+                status_text.info(f"Stopped early after {max_frames} frames for faster testing.")
+                break
+
+            progress_value = min(frame_idx / min(total_frames, max_frames if max_frames else total_frames), 1.0)
+
+            if frame_idx % VIDEO_FRAME_SKIP != 0:
+                progress_bar.progress(
+                    progress_value,
+                    text=f"Reading frame {frame_idx}..."
+                )
+                continue
+
+            frame = cv2.resize(frame, (VIDEO_RESIZE_WIDTH, VIDEO_RESIZE_HEIGHT))
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+            if frame_idx == VIDEO_FRAME_SKIP and show_preview:
+                preview.image(frame_rgb, caption="Video Preview", width=1200)
+
+            res = run_prediction(model, frame_rgb, conf_thres, imgsz)
+            detections, counts = get_detections_and_counts(res, conf_thres)
+
+            for cls, val in counts.items():
+                all_counts[cls].append(val)
+
+            processed_frames += 1
+
+            if show_preview and frame_idx % VIDEO_PREVIEW_SKIP == 0:
+                annotated = draw_filtered_detections(frame_rgb, detections)
+                preview.image(annotated, caption=f"Processed Frame {frame_idx}", width=1200)
+
+            progress_bar.progress(
+                progress_value,
+                text=f"Processed frame {frame_idx} | analyzed frames: {processed_frames}"
+            )
+
+            if processed_frames % 5 == 0:
+                status_text.write(
+                    f"Working... total frames read: {frame_idx}, frames analyzed: {processed_frames}"
+                )
+
+    finally:
+        cap.release()
+        progress_bar.empty()
+
+    final_counts = stable_video_count(all_counts)
+    return final_counts
 
 
 def render(go_to):
@@ -772,9 +869,9 @@ def render(go_to):
 
     c1, c2 = st.columns(2)
     with c1:
-        conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.40, 0.05)
+        conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.60, 0.05)
     with c2:
-        imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
+        imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=320)
 
     st.markdown(
         '<div class="note">Detection mode is enabled for your trained model output.</div>',
@@ -835,58 +932,57 @@ def render(go_to):
             label_visibility="collapsed"
         )
 
+        show_preview = st.checkbox("Show processing preview", value=False)
+        test_mode = st.checkbox("Test mode (faster, limited frames)", value=True)
+
         if uploaded_video is not None:
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
             temp_file.write(uploaded_video.read())
+            temp_file.flush()
+            temp_file.close()
             video_path = temp_file.name
 
             st.video(video_path)
 
             if st.button("Process Video", use_container_width=True):
                 try:
-                    cap = cv2.VideoCapture(video_path)
-                    all_counts = defaultdict(list)
-                    frame_idx = 0
-
-                    preview = st.empty()
-                    progress_bar = st.progress(0, text="Processing video...")
-
-                    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-                    total_frames = max(total_frames, 1)
-
-                    while True:
-                        ret, frame = cap.read()
-                        if not ret:
-                            break
-
-                        frame_idx += 1
-
-                        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                        res = run_prediction(model, frame_rgb, conf_thres, imgsz)
-
-                        detections, counts = get_detections_and_counts(res, conf_thres)
-
-                        for cls in set(all_counts.keys()) | set(counts.keys()):
-                            all_counts[cls].append(counts.get(cls, 0))
-
-                        annotated = draw_filtered_detections(frame_rgb, detections)
-                        preview.image(annotated, width=1200)
-
-                        progress_value = min(frame_idx / total_frames, 1.0)
-                        progress_bar.progress(progress_value, text=f"Processing frame {frame_idx}...")
-
-                    cap.release()
-
-                    final_counts = stable_video_count(all_counts)
-                    progress_bar.empty()
+                    with st.spinner("Processing video... please wait"):
+                        final_counts = process_video_file(
+                            model=model,
+                            video_path=video_path,
+                            conf_thres=conf_thres,
+                            imgsz=imgsz,
+                            show_preview=show_preview,
+                            max_frames=MAX_TEST_FRAMES if test_mode else None
+                        )
 
                     st.success("Video processing completed.")
                     show_counts(final_counts)
                     show_alerts(final_counts)
                     show_counts_chart(final_counts)
                     save_history(final_counts, "Video")
+
                 except Exception as e:
                     st.error(f"Video processing failed: {e}")
+
+                finally:
+                    try:
+                        if os.path.exists(video_path):
+                            os.remove(video_path)
+                    except Exception:
+                        pass
+
+        st.markdown(
+            """
+            <div class="note">
+                Tips for faster video processing:
+                <br>• Keep Image Size at 320
+                <br>• Turn off processing preview
+                <br>• Leave test mode on while debugging
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
         st.markdown('</div>', unsafe_allow_html=True)
 
