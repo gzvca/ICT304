@@ -36,3 +36,80 @@ timestamp,source,total_items,classes_detected,low_stock_items,counts_json
 2026-03-23 14:16:50,Image,63,8,None,Apples: 3; Bread: 6; Chips: 4; Noodles: 6; Oranges: 11; Packet Drinks: 3; Soft Drinks: 8; Sweets: 22
 2026-03-23 14:21:44,Video,27,8,"Chips, Noodles, Oranges",Apples: 6; Bread: 4; Chips: 1; Noodles: 2; Oranges: 2; Packet Drinks: 4; Soft Drinks: 3; Sweets: 5
 2026-03-23 14:35:54,Video,23,8,"Chips, Noodles, Oranges",Apples: 6; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 4; Soft Drinks: 3; Sweets: 4
+2026-03-23 21:37:24,Image,60,8,Noodles,Apples: 8; Bread: 6; Chips: 3; Noodles: 1; Oranges: 11; Packet Drinks: 4; Soft Drinks: 7; Sweets: 20
+2026-03-23 21:38:22,Webcam,0,0,None,
+2026-03-24 18:23:39,Image,12,6,"Apples, Chips, Sweets, Packet Drinks",Apples: 2; Bread: 3; Chips: 2; Packet Drinks: 1; Soft Drinks: 3; Sweets: 1
+2026-03-24 18:23:57,Image,13,5,"Chips, Bread, Sweets",Apples: 4; Bread: 1; Chips: 1; Soft Drinks: 5; Sweets: 2
+2026-03-24 18:24:05,Image,17,5,"Chips, Bread",Apples: 4; Bread: 2; Chips: 2; Soft Drinks: 5; Sweets: 4
+2026-03-24 18:24:25,Image,0,0,None,
+2026-03-24 18:24:42,Image,1,1,Soft Drinks,Soft Drinks: 1
+2026-03-24 18:25:18,Image,14,7,"Chips, Bread, Apples, Packet Drinks, Noodles",Apples: 1; Bread: 1; Chips: 2; Noodles: 1; Packet Drinks: 1; Soft Drinks: 4; Sweets: 4
+2026-03-24 18:25:48,Image,6,5,"Soft Drinks, Bread, Apples, Sweets, Chips",Apples: 1; Bread: 1; Chips: 1; Soft Drinks: 2; Sweets: 1
+2026-03-24 18:25:58,Image,7,6,"Soft Drinks, Bread, Apples, Sweets, Chips, Packet Drinks",Apples: 1; Bread: 1; Chips: 1; Packet Drinks: 1; Soft Drinks: 2; Sweets: 1
+2026-03-24 18:25:58,Image,6,5,"Soft Drinks, Bread, Apples, Sweets, Chips",Apples: 1; Bread: 1; Chips: 1; Soft Drinks: 2; Sweets: 1
+2026-03-24 18:26:15,Image,54,8,"Chips, Packet Drinks, Noodles",Apples: 3; Bread: 9; Chips: 2; Noodles: 1; Oranges: 9; Packet Drinks: 2; Soft Drinks: 7; Sweets: 21
+2026-03-24 18:26:34,Image,4,4,"Soft Drinks, Chips, Bread, Apples",Apples: 1; Bread: 1; Chips: 1; Soft Drinks: 1
+2026-03-24 18:26:50,Image,21,6,Noodles,Apples: 6; Bread: 3; Noodles: 1; Oranges: 4; Soft Drinks: 4; Sweets: 3
+2026-03-24 18:27:18,Image,1,1,Chips,Chips: 1
+2026-03-24 18:27:25,Image,0,0,None,
+2026-03-24 18:27:37,Image,0,0,None,
+2026-03-24 18:27:47,Image,6,2,Noodles,Noodles: 1; Sweets: 5
+2026-03-24 18:28:02,Image,61,8,None,Apples: 10; Bread: 3; Chips: 5; Noodles: 6; Oranges: 3; Packet Drinks: 4; Soft Drinks: 8; Sweets: 22
+2026-03-24 18:28:40,Image,3,1,None,Soft Drinks: 3
+2026-03-24 18:28:59,Image,3,1,None,Apples: 3
+2026-03-24 18:29:52,Image,1,1,Bread,Bread: 1
+2026-03-24 18:30:06,Image,8,1,None,Soft Drinks: 8
+2026-03-24 18:30:35,Image,4,3,"Chips, Apples, Noodles",Apples: 2; Chips: 1; Noodles: 1
+2026-03-24 18:30:49,Image,6,1,None,Noodles: 6
+2026-03-24 18:32:29,Image,15,5,"Chips, Bread",Apples: 4; Bread: 1; Chips: 1; Soft Drinks: 5; Sweets: 4
+2026-03-24 18:32:59,Image,41,8,Sweets,Apples: 8; Bread: 8; Chips: 4; Noodles: 4; Oranges: 4; Packet Drinks: 4; Soft Drinks: 8; Sweets: 1
+2026-03-24 18:33:12,Image,36,7,Oranges,Apples: 8; Bread: 8; Chips: 3; Noodles: 4; Oranges: 2; Packet Drinks: 3; Soft Drinks: 8
+2026-03-24 18:33:39,Image,14,7,"Chips, Apples, Bread, Soft Drinks, Noodles, Packet Drinks",Apples: 2; Bread: 2; Chips: 2; Noodles: 2; Packet Drinks: 1; Soft Drinks: 2; Sweets: 3
+2026-03-24 18:34:22,Image,17,7,"Chips, Bread, Soft Drinks, Noodles, Packet Drinks",Apples: 3; Bread: 2; Chips: 2; Noodles: 2; Packet Drinks: 1; Soft Drinks: 2; Sweets: 5
+2026-03-24 18:34:40,Image,6,5,"Soft Drinks, Bread, Apples, Sweets, Chips",Apples: 1; Bread: 1; Chips: 1; Soft Drinks: 2; Sweets: 1
+2026-03-24 18:34:47,Image,11,6,"Bread, Apples, Sweets, Chips, Packet Drinks",Apples: 2; Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 3; Sweets: 2
+2026-03-24 18:34:53,Image,10,6,"Soft Drinks, Bread, Apples, Sweets, Chips, Packet Drinks",Apples: 2; Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 2; Sweets: 2
+2026-03-24 18:35:15,Image,29,7,"Bread, Chips",Apples: 5; Bread: 2; Chips: 2; Noodles: 3; Oranges: 4; Soft Drinks: 9; Sweets: 4
+2026-03-24 18:35:25,Image,23,7,"Bread, Chips",Apples: 5; Bread: 2; Chips: 2; Noodles: 3; Oranges: 3; Soft Drinks: 5; Sweets: 3
+2026-03-24 18:35:26,Image,21,7,"Bread, Chips, Noodles",Apples: 5; Bread: 2; Chips: 2; Noodles: 2; Oranges: 3; Soft Drinks: 4; Sweets: 3
+2026-03-24 18:35:43,Image,14,7,"Chips, Bread, Apples, Packet Drinks, Noodles",Apples: 1; Bread: 1; Chips: 2; Noodles: 1; Packet Drinks: 1; Soft Drinks: 4; Sweets: 4
+2026-03-24 18:36:05,Image,61,8,None,Apples: 10; Bread: 3; Chips: 5; Noodles: 6; Oranges: 3; Packet Drinks: 4; Soft Drinks: 8; Sweets: 22
+2026-03-24 18:36:11,Image,64,8,None,Apples: 10; Bread: 4; Chips: 5; Noodles: 6; Oranges: 5; Packet Drinks: 4; Soft Drinks: 8; Sweets: 22
+2026-03-24 18:36:24,Image,61,8,None,Apples: 10; Bread: 3; Chips: 5; Noodles: 6; Oranges: 3; Packet Drinks: 4; Soft Drinks: 8; Sweets: 22
+2026-03-24 18:36:29,Image,50,8,"Bread, Oranges",Apples: 9; Bread: 2; Chips: 4; Noodles: 4; Oranges: 1; Packet Drinks: 4; Soft Drinks: 8; Sweets: 18
+2026-03-24 18:36:40,Image,42,7,Chips,Apples: 4; Bread: 6; Chips: 1; Noodles: 6; Oranges: 3; Soft Drinks: 7; Sweets: 15
+2026-03-24 18:37:07,Image,48,8,"Packet Drinks, Soft Drinks, Oranges",Apples: 9; Bread: 7; Chips: 3; Noodles: 5; Oranges: 2; Packet Drinks: 2; Soft Drinks: 1; Sweets: 19
+2026-03-24 18:37:18,Image,50,8,"Packet Drinks, Soft Drinks, Oranges",Apples: 9; Bread: 8; Chips: 4; Noodles: 5; Oranges: 2; Packet Drinks: 2; Soft Drinks: 1; Sweets: 19
+2026-03-24 18:37:20,Image,54,8,Packet Drinks,Apples: 9; Bread: 8; Chips: 4; Noodles: 5; Oranges: 4; Packet Drinks: 2; Soft Drinks: 3; Sweets: 19
+2026-03-24 18:37:27,Image,55,8,Packet Drinks,Apples: 9; Bread: 8; Chips: 4; Noodles: 5; Oranges: 4; Packet Drinks: 2; Soft Drinks: 4; Sweets: 19
+2026-03-24 18:37:30,Image,57,8,Packet Drinks,Apples: 9; Bread: 8; Chips: 4; Noodles: 5; Oranges: 5; Packet Drinks: 2; Soft Drinks: 4; Sweets: 20
+2026-03-24 18:39:14,Image,1,1,Sweets,Sweets: 1
+2026-03-24 18:39:41,Image,1,1,Bread,Bread: 1
+2026-03-24 18:39:53,Image,2,2,"Soft Drinks, Bread",Bread: 1; Soft Drinks: 1
+2026-03-24 18:40:31,Image,1,1,Packet Drinks,Packet Drinks: 1
+2026-03-24 23:46:25,Image,38,8,"Packet Drinks, Oranges, Noodles",Apples: 4; Bread: 5; Chips: 4; Noodles: 2; Oranges: 1; Packet Drinks: 2; Soft Drinks: 7; Sweets: 13
+2026-03-24 23:46:38,Image,35,8,"Packet Drinks, Oranges, Noodles",Apples: 3; Bread: 5; Chips: 4; Noodles: 2; Oranges: 1; Packet Drinks: 2; Soft Drinks: 5; Sweets: 13
+2026-03-24 23:46:39,Image,33,7,"Packet Drinks, Oranges",Apples: 3; Bread: 5; Chips: 4; Oranges: 1; Packet Drinks: 2; Soft Drinks: 5; Sweets: 13
+2026-03-24 23:46:43,Image,24,6,"Apples, Packet Drinks",Apples: 2; Bread: 4; Chips: 4; Packet Drinks: 1; Soft Drinks: 5; Sweets: 8
+2026-03-24 23:47:01,Image,35,8,"Packet Drinks, Oranges, Noodles",Apples: 3; Bread: 5; Chips: 4; Noodles: 2; Oranges: 1; Packet Drinks: 2; Soft Drinks: 5; Sweets: 13
+2026-03-24 23:47:02,Image,38,8,"Packet Drinks, Oranges, Noodles",Apples: 4; Bread: 5; Chips: 4; Noodles: 2; Oranges: 1; Packet Drinks: 2; Soft Drinks: 7; Sweets: 13
+2026-03-24 23:47:12,Image,14,7,"Chips, Bread, Apples, Packet Drinks, Noodles",Apples: 1; Bread: 1; Chips: 2; Noodles: 1; Packet Drinks: 1; Soft Drinks: 4; Sweets: 4
+2026-03-24 23:47:30,Image,16,7,"Chips, Bread, Noodles, Packet Drinks, Soft Drinks",Apples: 3; Bread: 2; Chips: 2; Noodles: 2; Packet Drinks: 1; Soft Drinks: 2; Sweets: 4
+2026-03-24 23:48:13,Image,13,5,"Soft Drinks, Noodles, Packet Drinks",Apples: 5; Chips: 3; Noodles: 2; Packet Drinks: 1; Soft Drinks: 2
+2026-03-24 23:48:30,Image,13,5,"Soft Drinks, Noodles, Packet Drinks",Apples: 5; Chips: 3; Noodles: 2; Packet Drinks: 1; Soft Drinks: 2
+2026-03-24 23:53:35,Video,20,8,"Soft Drinks, Chips, Noodles, Oranges",Apples: 6; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 3; Soft Drinks: 2; Sweets: 3
+2026-03-25 00:00:17,Video,23,8,"Chips, Oranges, Noodles",Apples: 6; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 4; Soft Drinks: 3; Sweets: 4
+2026-03-25 00:06:21,Image,48,8,"Chips, Packet Drinks",Apples: 5; Bread: 6; Chips: 2; Noodles: 6; Oranges: 3; Packet Drinks: 1; Soft Drinks: 8; Sweets: 17
+2026-03-25 00:16:05,Image,13,6,"Chips, Bread, Apples, Packet Drinks",Apples: 1; Bread: 1; Chips: 2; Packet Drinks: 1; Soft Drinks: 4; Sweets: 4
+2026-03-25 00:16:34,Image,1,1,Bread,Bread: 1
+2026-03-25 00:36:24,Image,29,4,Noodles,Bread: 8; Noodles: 2; Soft Drinks: 7; Sweets: 12
+2026-03-25 00:36:35,Image,21,5,Sweets,Bread: 9; Chips: 4; Noodles: 3; Soft Drinks: 4; Sweets: 1
+2026-03-25 00:37:01,Video,8,5,"Bread, Packet Drinks, Chips, Soft Drinks",Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 3
+2026-03-25 00:37:09,Video,8,5,"Bread, Packet Drinks, Chips, Soft Drinks",Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 3
+2026-03-25 00:37:39,Video,8,5,"Bread, Packet Drinks, Chips, Soft Drinks",Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 3
+2026-03-25 00:38:01,Video,11,8,"Sweets, Packet Drinks, Chips, Soft Drinks, Noodles, Apples, Oranges",Apples: 1; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 2
+2026-03-25 00:38:26,Video,8,5,"Bread, Packet Drinks, Chips, Soft Drinks",Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 3
+2026-03-25 00:38:44,Video,11,8,"Sweets, Packet Drinks, Chips, Soft Drinks, Noodles, Apples, Oranges",Apples: 1; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 2
+2026-03-25 00:45:01,Video,8,5,"Bread, Packet Drinks, Chips, Soft Drinks",Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 3
+2026-03-25 00:45:21,Video,11,8,"Sweets, Packet Drinks, Chips, Soft Drinks, Noodles, Apples, Oranges",Apples: 1; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 2
+2026-03-25 00:55:22,Video,27,8,"Chips, Noodles, Oranges",Apples: 6; Bread: 4; Chips: 1; Noodles: 2; Oranges: 2; Packet Drinks: 4; Soft Drinks: 3; Sweets: 5
