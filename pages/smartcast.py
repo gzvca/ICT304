@@ -1,5 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import time
 import pandas as pd
 #import matplotlib.pyplot as plt
 #import seaborn as sns
@@ -90,32 +91,33 @@ def inject_css():
             margin-bottom: 12px;
         }
 
-        .stat-card {
-            border-radius: 20px;
-            padding: 18px;
+         .stButton > button {
+            width: 200px;
+            height: 50px;
+            background: linear-gradient(135deg, #2F6FA3 0%, #3f82bb 100%);
             color: white;
-            box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
-            margin-bottom: 10px;
-        }
-
-        .stat-blue {
-            background: linear-gradient(135deg, #2F6FA3 0%, #4f8fc4 100%);
-        }
-
-        .stat-dark {
-            background: linear-gradient(135deg, #0B2A4A 0%, #234e7b 100%);
-        }
-
-        .stat-label {
-            font-size: 0.92rem;
-            opacity: 0.92;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 2rem;
+            border-radius: 14px;
             font-weight: 800;
-            line-height: 1.05;
+            border: none;
+            padding: 0.78rem 1rem;
+            box-shadow: 0 8px 18px rgba(47, 111, 163, 0.22);
+        }
+
+        .stButton > button:hover {
+            background: linear-gradient(135deg, #0B2A4A 0%, #1e4f82 100%);
+            color: white;
+        }
+
+        .stButton > button:focus:not(:active) {
+            color: white;
+            border-color: transparent;
+        }
+        
+        .note {
+            color: #64748B;
+            font-size: 0.94rem;
+            margin-top: 8px;
+            line-height: 1.6;
         }
         
         </style>
@@ -151,21 +153,38 @@ def render(go_to):
             
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Upload a CSV file</div>', unsafe_allow_html=True)
-    
+    st.markdown(
+        '<div class="note">Due to limitations, please only upload the given "Retail_Cleaned.csv" file. </div>',
+        unsafe_allow_html=True
+    )
     uploaded_file = st.file_uploader(
         "Upload your CSV",
         type=["csv"],
         label_visibility="collapsed",
         accept_multiple_files= False,
-        help="Only CSV files allowed"
+        help="Only CSV files allowed",
+        key="smartcast_upload"
         )
 
     if uploaded_file is not None:
-        try:
-            df = pd.read_csv(uploaded_file)
-            st.write(df.head())
-            st.success("CSV file successfully uploaded!")
-        except Exception as e:
-            st.error(f"Error reading file: {e}")
+        # Check file name
+        if uploaded_file.name != "Retail_Cleaned.csv":
+            st.error("❌ Incorrect file name. Please upload 'Retail_Cleaned.csv' only!")
+        else:
+            try:
+                df = pd.read_csv(uploaded_file)
+                st.write(df.head())
+                st.success("CSV file successfully uploaded!")
+                st.write("\n\n", unsafe_allow_html=True)
+                st.markdown('<div class="panel">', unsafe_allow_html=True)
+                st.markdown('<div class="panel-title">Predict Demand for 14 days</div>', unsafe_allow_html=True)
+    
+                if st.button(""):  # 50 spaces makes the button wide
+                    with st.spinner("In Processing...."):
+                        time.sleep(2)  # simulate a long-running task
+                        st.success("Prediction Completed")
+            except Exception as e:
+                st.error(f"Error reading file: {e}")
     else:
         st.error("⚠️ No file uploaded. Please upload a CSV file to continue.")
+        
