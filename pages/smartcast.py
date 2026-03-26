@@ -6,6 +6,7 @@ import io
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
+import plotly.express as px
 import multiprocessing
 import warnings
 warnings.filterwarnings("ignore")
@@ -26,6 +27,19 @@ CATEGORY_MAP = {
     "Category_026": "Snacks",
     "Category_029": "Frozen_Foods",
     "Category_031": "Household_Goods",
+}
+
+COLOR_MAP = {
+    "Bakery_Items":    "#1D2951",
+    "Beverages":       "#2657B3",
+    "Canned_Goods":    "#262C33",
+    "Dairy_Products":  "#778F78",
+    "Fresh_Produce":   "#3AD5DB",
+    "Frozen_Foods":    "#6FB3C8",
+    "Household_Goods": "#74B5A7",
+    "Instant_Foods":   "#15559A",
+    "Meat_Seafood":    "#556069",
+    "Snacks":          "#3A8782",
 }
 
 KEEP_CATEGORIES = list(CATEGORY_MAP.keys())
@@ -354,7 +368,41 @@ def run_pipeline(file_bytes: bytes):
     return featured, final_forecast, metrics, last_date
  
  
-#  PLOTLY CHART
+#  PLOTLY CHARTS
+def build_monthly_trend_chart(featured):
+    monthly = featured.groupby(
+        [featured['Date'].dt.to_period('M'), 'Product_Category']
+    )['Order_Demand'].sum().reset_index()
+    monthly['Date'] = monthly['Date'].dt.to_timestamp()
+    fig = px.line(monthly, x='Date', y='Order_Demand',
+                color='Product_Category',color_discrete_map=COLOR_MAP,
+                title='Monthly Demand Trend')
+    return fig
+
+def build_rolling_avg_chart(featured):
+    plot_df = featured.sort_values('Date')
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=plot_df['Date'], y=plot_df['Order_Demand'],
+                            mode='lines', name='Actual Demand', line=dict(color='#2F6FA3')))
+    fig.add_trace(go.Scatter(x=plot_df['Date'], y=plot_df['rolling_7d_avg'],
+                            mode='lines', name='7-Day Rolling Avg', line=dict(color='#f97316')))
+    fig.add_trace(go.Scatter(x=plot_df['Date'], y=plot_df['rolling_30d_avg'],
+                            mode='lines', name='30-Day Rolling Avg', line=dict(color='#2ECC71')))
+    fig.update_layout(title='Demand vs Rolling Averages')
+    return fig
+
+def build_distribution_chart(featured):
+    daily = (
+        featured.groupby(["Product_Category", "Date"])
+        .agg(Order_Demand=("Order_Demand", "sum"))
+        .reset_index()
+    )
+    fig = px.box(daily, x="Product_Category", y="Order_Demand",
+                title="Demand Distribution per Category", color='Product_Category',
+                color_discrete_map=COLOR_MAP,
+                log_y=True)
+    return fig
+
 def build_forecast_chart(featured: pd.DataFrame, final_forecast: pd.DataFrame,
                         category: str, last_date) -> go.Figure:
     hist = (featured[featured["Product_Category"] == category]
@@ -518,14 +566,29 @@ def render(go_to):
     st.markdown('<div class="panel-title">Run Analysis on the Given Dataset</div>', unsafe_allow_html=True)
     if st.button("  Run Analysis"):
         with st.spinner("Analyzing Dataset and generating graphs…"):
-            st.write("soon")
-            st.session_state["analysis_done"] = True  
+            file_bytes = uploaded_file.read()
+            uploaded_file.seek(0)
+            featured_analysis, _, _, _ = run_pipeline(file_bytes)
             
+            if st.session_state.get("analysis_done", False) and "featured_analysis" in st.session_state:
+                featured_analysis = st.session_state["featured_analysis"]
+            
+            st.plotly_chart(build_monthly_trend_chart(featured_analysis), width='stretch', config={"displaylogo": False})
+        
+            with st.expander(" View further detailed analysis"):
+                    st.plotly_chart(build_rolling_avg_chart(featured_analysis), width='stretch', config={"displaylogo": False})
+                    st.plotly_chart(build_distribution_chart(featured_analysis), width='stretch', config={"displaylogo": False})
+                    
+    
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            st.session_state["analysis_done"] = True  
         st.success("✅ Analysis complete!")
 
 
     st.markdown("</div>", unsafe_allow_html=True)
     if st.session_state.get("analysis_done", False):
+        
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">Predict Demand for 14 Days</div>', unsafe_allow_html=True)
         st.markdown(
@@ -586,7 +649,9 @@ def render(go_to):
                 fc_table["Date"] = fc_table["Date"].dt.strftime("%d %b %Y")
                 st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
                             width='stretch')
-    
+            
+            with st.expander(" View detailed forecast data table"):
+                st.error("  iIM NOT DONE")
             st.markdown("</div>", unsafe_allow_html=True)
     
             # Model metrics footer
