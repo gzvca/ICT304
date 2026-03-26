@@ -277,9 +277,9 @@ def run_pipeline(file_bytes: bytes):
  
     # 7. Train LightGBM (No grid search as it will take along time to run. Instead, the optimized parameters are already chosen beforehand)
     lgb_model = LGBMRegressor(
-        n_estimators=200, learning_rate=0.05, max_depth=6,
-        num_leaves=50, subsample=0.8, colsample_bytree=0.8,
-        reg_alpha=0, reg_lambda=1, min_child_samples=10,
+        n_estimators=200, learning_rate=0.1, max_depth=5,
+        num_leaves=31, subsample=0.8, colsample_bytree=0.8,
+        reg_alpha=0.5, reg_lambda=1, min_child_samples=10,
         n_jobs=max(1, multiprocessing.cpu_count() // 2),
         random_state=42, verbose=-1
     )
