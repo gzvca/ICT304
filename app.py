@@ -275,7 +275,7 @@ if st.session_state.page == "home":
             st.rerun()
 
     st.markdown(
-        '<div class="footer">SuperSmart • AI Visual Intelligence<br>For any enquiries, please contact support@supersmart.com.</div>',
+        '<div class="footer">SuperSmart • AI Visual Intelligence</div>',
         unsafe_allow_html=True,
     )
 
