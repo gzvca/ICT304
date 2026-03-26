@@ -467,7 +467,7 @@ def render(go_to):
         
     top_cols = st.columns([1, 4])
     with top_cols[0]:
-        if st.button("← Back", use_container_width=True):
+        if st.button("← Back", width='stretch'):
             go_to("home")
             st.rerun()
             
@@ -505,7 +505,7 @@ def render(go_to):
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Data Preview</div>', unsafe_allow_html=True)
-    st.dataframe(preview, use_container_width=True)
+    st.dataframe(preview,  width='stretch')
     st.success("✅ CSV file successfully uploaded!")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -549,7 +549,7 @@ def render(go_to):
  
         # Chart
         fig = build_forecast_chart(featured, final_forecast, selected_cat, last_date)
-        st.plotly_chart(fig, use_container_width=True, config={
+        st.plotly_chart(fig,  width='stretch', config={
             "displaylogo": False,
             "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
         })
@@ -563,7 +563,7 @@ def render(go_to):
             )
             fc_table["Date"] = fc_table["Date"].dt.strftime("%d %b %Y")
             st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
-                        use_container_width=True)
+                        width='stretch')
  
         st.markdown("</div>", unsafe_allow_html=True)
  
