@@ -510,11 +510,8 @@ def render_stats(featured, final_forecast, category, metrics):
     total_fc   = int(fc_cat["Predicted_Demand"].sum())
     avg_hist   = int(hist_cat["Order_Demand"].mean())
     peak_fc    = int(fc_cat["Predicted_Demand"].max())
-    last_act   = int(hist_cat.sort_values("Date")["Order_Demand"].iloc[-1])
-    day1_fc    = int(fc_cat.sort_values("Date")["Predicted_Demand"].iloc[0])
-    chg        = round((day1_fc - last_act) / (last_act + 1e-5) * 100, 1)
-    sign       = "+" if chg >= 0 else ""
-    chg_color  = "green" if chg >= 0 else "orange"
+    avg_fc     = int(fc_cat["Predicted_Demand"].mean())
+
  
     st.markdown(f"""
     <div class="stat-row">
@@ -531,8 +528,8 @@ def render_stats(featured, final_forecast, category, metrics):
             <div class="stat-value">{peak_fc:,}</div>
         </div>
         <div class="stat-card stat-blue">
-            <div class="stat-label">vs Last Actual</div>
-            <div class="stat-value {chg_color}">{sign}{chg}%</div>
+            <div class="stat-label">Avg Future Demand</div>
+            <div class="stat-value">{avg_fc:,}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)    
@@ -543,7 +540,7 @@ def render_stock_alerts(featured, final_forecast, category):
     rolling_7d = hist_cat["Order_Demand"].rolling(7, min_periods=1).mean().iloc[-1]
     avg_fc     = fc_cat["Predicted_Demand"].mean()
 
-    if avg_fc >= rolling_7d * 1.5:
+    if avg_fc >= rolling_7d * 1.2:
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #4a1a1a 0%, #7a2d2d 100%);
