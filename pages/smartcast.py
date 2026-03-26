@@ -536,7 +536,62 @@ def render_stats(featured, final_forecast, category, metrics):
         </div>
     </div>
     """, unsafe_allow_html=True)    
-  
+def render_stock_alerts(featured, final_forecast, category):
+    fc_cat   = final_forecast[final_forecast["Product_Category"] == category]
+    hist_cat = featured[featured["Product_Category"] == category]
+
+    rolling_7d = hist_cat["Order_Demand"].rolling(7, min_periods=1).mean().iloc[-1]
+    avg_fc     = fc_cat["Predicted_Demand"].mean()
+
+    if avg_fc >= rolling_7d * 1.5:
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #4a1a1a 0%, #7a2d2d 100%);
+            border: 1px solid #e74c3c;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        ">
+            <div style="font-size: 1.8rem;">🚨</div>
+            <div>
+                <div style="color: #ffb3b3; font-weight: 800; font-size: 1rem;">
+                    Stock Up Alert — {category.replace('_', ' ')}
+                </div>
+                <div style="color: #ffd5d5; font-size: 0.9rem; margin-top: 4px;">
+                    Predicted demand (<strong>{int(avg_fc):,}/day</strong>) is 150% above 
+                    the 7-day rolling average (<strong>{int(rolling_7d):,}/day</strong>). 
+                    ⚠️ Recommended to stock up before the forecast period.
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="
+            background: linear-gradient(135deg, #1a4a1a 0%, #2d7a2d 100%);
+            border: 1px solid #4CAF50;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        ">
+            <div style="font-size: 1.8rem;">✅</div>
+            <div>
+                <div style="color: #90EE90; font-weight: 800; font-size: 1rem;">
+                    Stock Safe — {category.replace('_', ' ')}
+                </div>
+                <div style="color: #c8f7c8; font-size: 0.9rem; margin-top: 4px;">
+                    Predicted demand (<strong>{int(avg_fc):,}/day</strong>) 
+                    is within normal range. No restocking needed.
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     
 def render(go_to):
     inject_css()
@@ -661,6 +716,8 @@ def render(go_to):
     
             # Stats
             render_stats(featured, final_forecast, selected_cat, metrics)
+            render_stock_alerts(featured, final_forecast,selected_cat)
+
     
             # Chart
             fig = build_forecast_chart(featured, final_forecast, selected_cat, last_date)
