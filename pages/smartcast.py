@@ -277,9 +277,9 @@ def run_pipeline(file_bytes: bytes):
  
     # 7. Train LightGBM (No grid search as it will take along time to run. Instead, the optimized parameters are already chosen beforehand)
     lgb_model = LGBMRegressor(
-        n_estimators=200, learning_rate=0.05, max_depth=6,
-        num_leaves=50, subsample=0.8, colsample_bytree=0.8,
-        reg_alpha=0, reg_lambda=1, min_child_samples=10,
+        n_estimators=200, learning_rate=0.1, max_depth=5,
+        num_leaves=31, subsample=0.8, colsample_bytree=0.8,
+        reg_alpha=0.5, reg_lambda=1, min_child_samples=10,
         n_jobs=max(1, multiprocessing.cpu_count() // 2),
         random_state=42, verbose=-1
     )
@@ -467,7 +467,7 @@ def render(go_to):
         
     top_cols = st.columns([1, 4])
     with top_cols[0]:
-        if st.button("← Back", use_container_width=True):
+        if st.button("← Back", width='stretch'):
             go_to("home")
             st.rerun()
             
@@ -505,7 +505,7 @@ def render(go_to):
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Data Preview</div>', unsafe_allow_html=True)
-    st.dataframe(preview, use_container_width=True)
+    st.dataframe(preview,  width='stretch')
     st.success("✅ CSV file successfully uploaded!")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -549,7 +549,7 @@ def render(go_to):
  
         # Chart
         fig = build_forecast_chart(featured, final_forecast, selected_cat, last_date)
-        st.plotly_chart(fig, use_container_width=True, config={
+        st.plotly_chart(fig,  width='stretch', config={
             "displaylogo": False,
             "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
         })
@@ -563,7 +563,7 @@ def render(go_to):
             )
             fc_table["Date"] = fc_table["Date"].dt.strftime("%d %b %Y")
             st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
-                        use_container_width=True)
+                        width='stretch')
  
         st.markdown("</div>", unsafe_allow_html=True)
  
