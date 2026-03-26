@@ -513,73 +513,90 @@ def render(go_to):
     st.dataframe(preview,  width='stretch')
     st.success("✅ CSV file successfully uploaded!")
     st.markdown("</div>", unsafe_allow_html=True)
-
+    
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.markdown('<div class="panel-title">Predict Demand for 14 Days</div>', unsafe_allow_html=True)
- 
-    if st.button("  Run Forecast"):
-        with st.spinner("Training LightGBM model and generating forecast…"):
-            file_bytes = uploaded_file.read()
-            featured, final_forecast, metrics, last_date = run_pipeline(file_bytes)
-            st.session_state["forecast_ready"]  = True
-            st.session_state["featured"]        = featured
-            st.session_state["final_forecast"]  = final_forecast
-            st.session_state["metrics"]         = metrics
-            st.session_state["last_date"]       = last_date
-        st.success("✅ Forecast complete!")
- 
+    st.markdown('<div class="panel-title">Run Analysis on the Given Dataset</div>', unsafe_allow_html=True)
+    if st.button("  Run Analysis"):
+        with st.spinner("Analyzing Dataset and generating graphs…"):
+            st.write("soon")
+            st.session_state["analysis_done"] = True  
+            
+        st.success("✅ Analysis complete!")
+
+
     st.markdown("</div>", unsafe_allow_html=True)
- 
-    # Forecast results
-    if st.session_state.get("forecast_ready"):
-        featured       = st.session_state["featured"]
-        final_forecast = st.session_state["final_forecast"]
-        metrics        = st.session_state["metrics"]
-        last_date      = st.session_state["last_date"]
- 
-        categories = sorted(final_forecast["Product_Category"].unique().tolist())
- 
+    if st.session_state.get("analysis_done", False):
         st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown('<div class="panel-title">📊 14-Day Demand Forecast</div>', unsafe_allow_html=True)
- 
-        selected_cat = st.selectbox(
-            "Select Product Category",
-            options=categories,
-            index=0,
-            key="cat_select"
-        )
- 
-        # Stats
-        render_stats(featured, final_forecast, selected_cat, metrics)
- 
-        # Chart
-        fig = build_forecast_chart(featured, final_forecast, selected_cat, last_date)
-        st.plotly_chart(fig,  width='stretch', config={
-            "displaylogo": False,
-            "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
-        })
- 
-        # Forecast table
-        with st.expander(" View detailed forecast data table"):
-            fc_table = (
-                final_forecast[final_forecast["Product_Category"] == selected_cat]
-                .sort_values("Date")
-                .reset_index(drop=True)
-            )
-            fc_table["Date"] = fc_table["Date"].dt.strftime("%d %b %Y")
-            st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
-                        width='stretch')
- 
-        st.markdown("</div>", unsafe_allow_html=True)
- 
-        # Model metrics footer
+        st.markdown('<div class="panel-title">Predict Demand for 14 Days</div>', unsafe_allow_html=True)
         st.markdown(
-            f'<div class="note" style="text-align:center;padding-top:4px;">'
-            f'Model performance on held-out test set — '
-            f'MAE: <strong>{metrics["MAE"]:,}</strong> &nbsp;|&nbsp; '
-            f'RMSE: <strong>{metrics["RMSE"]:,}</strong> &nbsp;|&nbsp; '
-            f'SMAPE: <strong>{metrics["SMAPE"]}%</strong>'
-            f'</div>',
+            '<div class="note">SmartCast predictions are powered by AI. While we strive for accuracy, please verify information before proceeding. </div>',
             unsafe_allow_html=True
         )
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+        if st.button("  Run Forecast"):
+            with st.spinner("Training LightGBM model and generating forecast…"):
+                file_bytes = uploaded_file.read()
+                featured, final_forecast, metrics, last_date = run_pipeline(file_bytes)
+                st.session_state["forecast_ready"]  = True
+                st.session_state["featured"]        = featured
+                st.session_state["final_forecast"]  = final_forecast
+                st.session_state["metrics"]         = metrics
+                st.session_state["last_date"]       = last_date
+            st.success("✅ Forecast complete!")
+    
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+        # Forecast results
+        if st.session_state.get("forecast_ready"):
+            featured       = st.session_state["featured"]
+            final_forecast = st.session_state["final_forecast"]
+            metrics        = st.session_state["metrics"]
+            last_date      = st.session_state["last_date"]
+    
+            categories = sorted(final_forecast["Product_Category"].unique().tolist())
+    
+            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.markdown('<div class="panel-title">📊 14-Day Demand Forecast</div>', unsafe_allow_html=True)
+    
+            selected_cat = st.selectbox(
+                "Select Product Category",
+                options=categories,
+                index=0,
+                key="cat_select"
+            )
+    
+            # Stats
+            render_stats(featured, final_forecast, selected_cat, metrics)
+    
+            # Chart
+            fig = build_forecast_chart(featured, final_forecast, selected_cat, last_date)
+            st.plotly_chart(fig,  width='stretch', config={
+                "displaylogo": False,
+                "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+            })
+    
+            # Forecast table
+            with st.expander(" View detailed forecast data table"):
+                fc_table = (
+                    final_forecast[final_forecast["Product_Category"] == selected_cat]
+                    .sort_values("Date")
+                    .reset_index(drop=True)
+                )
+                fc_table["Date"] = fc_table["Date"].dt.strftime("%d %b %Y")
+                st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
+                            width='stretch')
+    
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+            # Model metrics footer
+            st.markdown(
+                f'<div class="note" style="text-align:center;padding-top:4px;">'
+                f'Model performance on held-out test set — '
+                f'MAE: <strong>{metrics["MAE"]:,}</strong> &nbsp;|&nbsp; '
+                f'RMSE: <strong>{metrics["RMSE"]:,}</strong> &nbsp;|&nbsp; '
+                f'SMAPE: <strong>{metrics["SMAPE"]}%</strong>'
+                f'</div>',
+                unsafe_allow_html=True
+            )
     
