@@ -533,14 +533,14 @@ def render_stats(featured, final_forecast, category, metrics):
         </div>
     </div>
     """, unsafe_allow_html=True)    
-def render_stock_alerts(featured, final_forecast, category):
+def render_stock_alerts(featured, final_forecast, category, conf_thres):
     fc_cat   = final_forecast[final_forecast["Product_Category"] == category]
     hist_cat = featured[featured["Product_Category"] == category]
 
     rolling_7d = hist_cat["Order_Demand"].rolling(7, min_periods=1).mean().iloc[-1]
     avg_fc     = fc_cat["Predicted_Demand"].mean()
 
-    if avg_fc >= rolling_7d * 1.2:
+    if avg_fc >= rolling_7d * conf_thres:
         st.markdown(f"""
         <div style="
             background: linear-gradient(135deg, #4a1a1a 0%, #7a2d2d 100%);
@@ -713,7 +713,19 @@ def render(go_to):
     
             # Stats
             render_stats(featured, final_forecast, selected_cat, metrics)
-            render_stock_alerts(featured, final_forecast,selected_cat)
+            
+            st.markdown('<div class="panel-title">Settings</div>', unsafe_allow_html=True)
+
+            c1, c2 = st.columns(2)
+            with c1:
+                conf_thres = st.slider("Threshold",min_value=1.0, max_value=2.0, value=1.5, step=0.1)
+            with c2:
+                st.markdown(
+            '<div class="note" style="text-align:right;">SmartCast compares the demand of the first prediction day against the rolling 7-day average demand. The sensitivity for the alert system can be set here.</div>',
+            unsafe_allow_html=True
+                )
+            
+            render_stock_alerts(featured, final_forecast, selected_cat, conf_thres)
 
     
             # Chart
