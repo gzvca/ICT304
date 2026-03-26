@@ -30,16 +30,16 @@ CATEGORY_MAP = {
 }
 
 COLOR_MAP = {
-    "Bakery_Items":    "#1D2951",
-    "Beverages":       "#2657B3",
-    "Canned_Goods":    "#262C33",
-    "Dairy_Products":  "#778F78",
-    "Fresh_Produce":   "#3AD5DB",
+    "Bakery_Items":    "#B91F1F",
+    "Beverages":       "#D1891C",
+    "Canned_Goods":    "#DDCC0F",
+    "Dairy_Products":  "#6FBE2B",
+    "Fresh_Produce":   "#2681CB",
     "Frozen_Foods":    "#6FB3C8",
-    "Household_Goods": "#74B5A7",
-    "Instant_Foods":   "#15559A",
-    "Meat_Seafood":    "#556069",
-    "Snacks":          "#3A8782",
+    "Household_Goods": "#19214F",
+    "Instant_Foods":   "#4C1963",
+    "Meat_Seafood":    "#D657D6",
+    "Snacks":          "#934B5B",
 }
 
 KEEP_CATEGORIES = list(CATEGORY_MAP.keys())
@@ -383,11 +383,11 @@ def build_rolling_avg_chart(featured):
     plot_df = featured.sort_values('Date')
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=plot_df['Date'], y=plot_df['Order_Demand'],
-                            mode='lines', name='Actual Demand', line=dict(color='#2F6FA3')))
+                            mode='lines', name='Actual Demand', line=dict(color="#83B488")))
     fig.add_trace(go.Scatter(x=plot_df['Date'], y=plot_df['rolling_7d_avg'],
-                            mode='lines', name='7-Day Rolling Avg', line=dict(color='#f97316')))
+                            mode='lines', name='7-Day Rolling Avg', line=dict(color="#50799F")))
     fig.add_trace(go.Scatter(x=plot_df['Date'], y=plot_df['rolling_30d_avg'],
-                            mode='lines', name='30-Day Rolling Avg', line=dict(color='#2ECC71')))
+                            mode='lines', name='30-Day Rolling Avg', line=dict(color="#a36561")))
     fig.update_layout(title='Demand vs Rolling Averages')
     return fig
 
@@ -402,6 +402,36 @@ def build_distribution_chart(featured):
                 color_discrete_map=COLOR_MAP,
                 log_y=True)
     return fig
+
+def build_total_demand_future_data(final_forecast):
+    category_demand_clean_future_data = final_forecast.groupby('Product_Category')['Predicted_Demand'].sum().reset_index()
+
+    fig = px.bar(
+        category_demand_clean_future_data,
+        x='Product_Category',
+        y='Predicted_Demand',
+        title='Total Demand per Category (For 14 Days)',
+    )
+    fig.update_traces(marker_color="#234e7b") 
+    return fig
+
+def build_weekly_demand_future_data(final_forecast):
+    
+    final_forecast['Day_of_Week'] = final_forecast['Date'].dt.day_name()
+    dow = final_forecast.groupby("Day_of_Week")["Predicted_Demand"].mean().reset_index()
+    day_order = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]
+    dow["DayOfWeek"] = pd.Categorical(dow["Day_of_Week"], categories=day_order, ordered=True)
+    dow = dow.sort_values("DayOfWeek")
+        
+    fig = px.bar(
+                dow, 
+                x="Day_of_Week", 
+                y="Predicted_Demand",
+                title="Average Demand by Day of Week"
+                )
+    fig.update_traces(marker_color="#4f8fc4")    
+    return fig
+        
 
 def build_forecast_chart(featured: pd.DataFrame, final_forecast: pd.DataFrame,
                         category: str, last_date) -> go.Figure:
@@ -565,7 +595,7 @@ def render(go_to):
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Run Analysis on the Given Dataset</div>', unsafe_allow_html=True)
     if st.button("  Run Analysis"):
-        with st.spinner("Analyzing Dataset and generating graphs…"):
+        with st.spinner("Analyzing dataset and generating graphs…"):
             file_bytes = uploaded_file.read()
             uploaded_file.seek(0)
             featured_analysis, _, _, _ = run_pipeline(file_bytes)
@@ -650,10 +680,15 @@ def render(go_to):
                 st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
                             width='stretch')
             
-            with st.expander(" View detailed forecast data table"):
-                st.error("  iIM NOT DONE")
+            with st.expander(" View detailed prediction data analysis"):
+                st.plotly_chart(build_total_demand_future_data(final_forecast), 
+                                width='stretch', config={"displaylogo": False})
+                st.plotly_chart(build_weekly_demand_future_data(final_forecast),
+                                width='stretch', config={"displaylogo": False})
+            
             st.markdown("</div>", unsafe_allow_html=True)
-    
+
+
             # Model metrics footer
             st.markdown(
                 f'<div class="note" style="text-align:center;padding-top:4px;">'
