@@ -280,9 +280,9 @@ if st.session_state.page == "home":
     )
 
 elif st.session_state.page == "smartcount":
-    import pages.smartcount as smartcount
+    from pages import smartcount
     smartcount.render(go_to)
 
 elif st.session_state.page == "smartcast":
-    import pages.smartcast as smartcast
+    from pages import smartcast
     smartcast.render(go_to)
