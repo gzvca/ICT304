@@ -465,10 +465,15 @@ def render(go_to):
     render_header()
 
         
-    top_cols = st.columns([1, 4])
+    top_cols = st.columns([1, 7, 2])
     with top_cols[0]:
         if st.button("← Back", width='stretch'):
             go_to("home")
+            st.rerun()
+            
+    with top_cols[2]:
+        if st.button("Go to SmartCount →", width='stretch'):
+            go_to("smartcount")
             st.rerun()
             
     st.markdown('<div class="panel">', unsafe_allow_html=True)
