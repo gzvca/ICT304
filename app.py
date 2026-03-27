@@ -128,16 +128,12 @@ if st.session_state.page == "home":
     <html>
     <head>
       <style>
-        * {{
-          box-sizing: border-box;
-        }}
-
+        * {{ box-sizing: border-box; }}
         body {{
           margin: 0;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
           background: transparent;
         }}
-
         .hero-card {{
           width: 100%;
           background: linear-gradient(135deg, #0B2A4A 0%, #2F6FA3 100%);
@@ -146,63 +142,38 @@ if st.session_state.page == "home":
           box-shadow: 0 14px 30px rgba(0,0,0,0.14);
           color: white;
         }}
-
         .hero-flex {{
           display: flex;
           align-items: center;
           gap: 26px;
           min-height: 185px;
         }}
-
         .hero-logo-wrap {{
-          flex: 0 0 auto;
           padding: 12px;
           border-radius: 20px;
           background: rgba(255,255,255,0.16);
-          border: 1px solid rgba(255,255,255,0.20);
-          backdrop-filter: blur(8px);
-          box-shadow: 0 8px 20px rgba(0,0,0,0.10);
         }}
-
-        .hero-logo-wrap img {{
-          width: 105px;
-          height: auto;
-          display: block;
-        }}
-
-        .hero-text {{
-          flex: 1 1 auto;
-          min-width: 0;
-        }}
-
+        .hero-logo-wrap img {{ width: 105px; }}
         .hero-title {{
           font-size: 3.2rem;
           font-weight: 800;
-          line-height: 1.05;
-          margin: 0 0 14px 0;
-          color: #ffffff;
+          margin-bottom: 10px;
         }}
-
         .hero-sub {{
-          font-size: 1.12rem;
-          line-height: 1.65;
-          color: rgba(255,255,255,0.93);
-          margin: 0;
-          max-width: 760px;
+          font-size: 1.1rem;
+          color: rgba(255,255,255,0.9);
         }}
       </style>
     </head>
     <body>
       <div class="hero-card">
         <div class="hero-flex">
-          <div class="hero-logo-wrap">
-            {hero_logo}
-          </div>
-          <div class="hero-text">
+          <div class="hero-logo-wrap">{hero_logo}</div>
+          <div>
             <div class="hero-title">SuperSmart</div>
-            <p class="hero-sub">
+            <div class="hero-sub">
               A smart retail intelligence platform for automated counting, monitoring, and visual analysis using AI.
-            </p>
+            </div>
           </div>
         </div>
       </div>
@@ -212,12 +183,14 @@ if st.session_state.page == "home":
 
     components.html(hero_html, height=230, scrolling=False)
 
+    # INFO BANNER 
     st.info("💡 For a better viewing experience, please enable Light Mode from the menu on the top-right.")
 
     st.markdown('<div class="section-title">Choose a Module</div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2, gap="large")
 
+    # SmartCount 
     with col1:
         st.markdown(
             """
@@ -225,6 +198,12 @@ if st.session_state.page == "home":
                 <div class="card-title">📦 SmartCount</div>
                 <div class="card-desc">
                     Detect and count products from images, videos, or live webcam.
+                </div>
+                <div>
+                    <span class="pill">Image</span>
+                    <span class="pill">Video</span>
+                    <span class="pill">Webcam</span>
+                    <span class="pill">Alerts</span>
                 </div>
             </div>
             """,
@@ -234,6 +213,7 @@ if st.session_state.page == "home":
             go_to("smartcount")
             st.rerun()
 
+    # SmartCast 
     with col2:
         st.markdown(
             """
@@ -241,6 +221,11 @@ if st.session_state.page == "home":
                 <div class="card-title">📺 SmartCast</div>
                 <div class="card-desc">
                     Demand forecasting using AI and time-series insights.
+                </div>
+                <div>
+                    <span class="pill">Live</span>
+                    <span class="pill">AI</span>
+                    <span class="pill">Insights</span>
                 </div>
             </div>
             """,
