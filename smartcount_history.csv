@@ -113,3 +113,4 @@ timestamp,source,total_items,classes_detected,low_stock_items,counts_json
 2026-03-25 00:45:01,Video,8,5,"Bread, Packet Drinks, Chips, Soft Drinks",Bread: 2; Chips: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 3
 2026-03-25 00:45:21,Video,11,8,"Sweets, Packet Drinks, Chips, Soft Drinks, Noodles, Apples, Oranges",Apples: 1; Bread: 3; Chips: 1; Noodles: 1; Oranges: 1; Packet Drinks: 1; Soft Drinks: 1; Sweets: 2
 2026-03-25 00:55:22,Video,27,8,"Chips, Noodles, Oranges",Apples: 6; Bread: 4; Chips: 1; Noodles: 2; Oranges: 2; Packet Drinks: 4; Soft Drinks: 3; Sweets: 5
+2026-03-27 14:50:04,Webcam,0,0,None,
