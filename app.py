@@ -212,7 +212,6 @@ if st.session_state.page == "home":
 
     components.html(hero_html, height=230, scrolling=False)
 
-    # ✅ INFO BANNER ADDED HERE
     st.info("💡 For a better viewing experience, please enable Light Mode from the menu on the top-right.")
 
     st.markdown('<div class="section-title">Choose a Module</div>', unsafe_allow_html=True)
