@@ -240,10 +240,7 @@ def ensure_obb_result(res):
 
 
 def get_detections_and_counts(res, conf_threshold=0.70):
-    """
-    Use raw OBB detections only.
-    No extra duplicate suppression.
-    """
+
     ensure_obb_result(res)
 
     detections = []
@@ -783,7 +780,7 @@ def render(go_to):
         imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
 
     st.markdown(
-        '<div class="note">Detection mode is enabled for your trained model output.</div>',
+        '<div class="note">For better results, try adjusting the confidence threshold and image size using the sliders above.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
