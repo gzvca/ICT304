@@ -21,8 +21,6 @@ FRAME_SKIP = 1
 SHOW_LABELS = True
 SHOW_CONF = True
 
-# Uncomment if you have CUDA
-# DEVICE = 0
 DEVICE = "cpu"
 
 # =====================================
@@ -46,8 +44,25 @@ cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
 print("Camera opened.")
 
+
 # =====================================
-# HELPERS
+# COLORS 
+# =====================================
+def get_class_colors():
+    return {
+        "apples": (255, 80, 80),
+        "bread": (255, 220, 0),
+        "chips": (255, 255, 255),
+        "noodles": (160, 255, 0),
+        "oranges": (120, 70, 20),
+        "packet drinks": (220, 80, 220),
+        "soft drinks": (70, 100, 255),
+        "sweets": (0, 255, 255),
+    }
+
+
+# =====================================
+# OVERLAY UI
 # =====================================
 def draw_live_overlay(frame, class_counts, frame_idx, fps_value):
     padding = 10
@@ -88,14 +103,19 @@ def draw_live_overlay(frame, class_counts, frame_idx, fps_value):
     return frame
 
 
+# =====================================
+# DRAW DETECTIONS (STRICT COLORS)
+# =====================================
 def draw_obb_fast(frame, res):
     if getattr(res, "obb", None) is None:
-        raise RuntimeError("This model/output does not provide OBB results.")
+        raise RuntimeError("Model does not provide OBB results.")
 
     if len(res.obb) == 0:
         return frame
 
     names = res.names
+    colors = get_class_colors()
+
     corners = res.obb.xyxyxyxy.cpu().numpy().astype(int)
     cls_ids = res.obb.cls.cpu().numpy().astype(int)
     confs = res.obb.conf.cpu().numpy()
@@ -104,32 +124,64 @@ def draw_obb_fast(frame, res):
         if conf < CONF_THRES:
             continue
 
-        pts = pts.reshape((-1, 1, 2))
-        cv2.polylines(frame, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
+        class_name = str(names[cid]).strip().lower()
 
+        if class_name not in colors:
+            raise ValueError(f"Missing color for class: {class_name}")
+
+        color = colors[class_name]
+
+        pts = pts.reshape((-1, 1, 2))
+
+        # draw box
+        cv2.polylines(frame, [pts], True, color, 2)
+
+        # label
         label_parts = []
         if SHOW_LABELS:
-            label_parts.append(str(names[cid]))
+            label_parts.append(class_name)
         if SHOW_CONF:
             label_parts.append(f"{conf:.2f}")
 
         if label_parts:
             label = " ".join(label_parts)
+
             x = int(np.min(pts[:, 0, 0]))
             y = int(np.min(pts[:, 0, 1])) - 8
+
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.6
+            thickness = 2
+            padding = 4
+
+            (tw, th), baseline = cv2.getTextSize(label, font, font_scale, thickness)
+
+            # label background
+            cv2.rectangle(
+                frame,
+                (x, max(0, y - th - padding)),
+                (x + tw + padding * 2, y + baseline + padding),
+                color,
+                -1
+            )
+
+            # label text
             cv2.putText(
                 frame,
                 label,
-                (x, max(20, y)),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
+                (x + padding, y),
+                font,
+                font_scale,
+                (0, 0, 0),
+                thickness
             )
 
     return frame
 
 
+# =====================================
+# SAVE HISTORY
+# =====================================
 def save_history(final_counts, source_type="Webcam"):
     filepath = os.path.join(os.getcwd(), HISTORY_CSV)
     file_exists = os.path.exists(filepath)
@@ -172,19 +224,9 @@ try:
     while True:
         ret, frame = cap.read()
         if not ret:
-            print("Failed to read frame.")
             break
 
         frame_idx += 1
-
-        if FRAME_SKIP > 1 and (frame_idx % FRAME_SKIP != 0):
-            if last_annotated is not None:
-                cv2.imshow("SMARTCOUNT", last_annotated)
-
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                print("Finalizing...")
-                break
-            continue
 
         res = model.predict(
             frame,
@@ -197,9 +239,7 @@ try:
         if not obb_checked:
             obb_checked = True
             if getattr(res, "obb", None) is None:
-                raise RuntimeError(
-                    "This script expects OBB output, but the model does not return OBB results."
-                )
+                raise RuntimeError("Model does not return OBB.")
 
         current_counts = defaultdict(int)
 
@@ -210,7 +250,7 @@ try:
             for cid, conf in zip(class_ids, confs):
                 if conf < CONF_THRES:
                     continue
-                class_name = res.names[cid]
+                class_name = str(res.names[cid]).strip().lower()
                 current_counts[class_name] += 1
 
         annotated = frame.copy()
@@ -225,10 +265,9 @@ try:
         last_annotated = annotated
         last_counts = dict(current_counts)
 
-        cv2.imshow("SMARTCOUNT", last_annotated)
+        cv2.imshow("SMARTCOUNT", annotated)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
-            print("Finalizing...")
             break
 
 finally:
@@ -236,13 +275,4 @@ finally:
     cv2.destroyAllWindows()
 
     final_counts = {k: v for k, v in last_counts.items() if v > 0}
-
     save_history(final_counts, "Webcam")
-
-    print("\nFinal inventory:")
-    if final_counts:
-        for cls_name in sorted(final_counts.keys()):
-            print(f"{cls_name}: {final_counts[cls_name]}")
-        print("TOTAL:", sum(final_counts.values()))
-    else:
-        print("No items found.")

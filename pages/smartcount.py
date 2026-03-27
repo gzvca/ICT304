@@ -759,14 +759,15 @@ def render(go_to):
     inject_css()
     render_header()
 
-    top_cols = st.columns([2, 4, 2])
+    top_cols = st.columns([1, 6, 2])
+    
     with top_cols[0]:
-        if st.button("← Back", width='stretch'):
+        if st.button("← Back", use_container_width=True):
             go_to("home")
             st.rerun()
-            
+
     with top_cols[2]:
-        if st.button("Go to SmartCast →", width='stretch'):
+        if st.button("Go To SmartCast →", use_container_width=True):
             go_to("smartcast")
             st.rerun()
 
@@ -782,7 +783,7 @@ def render(go_to):
         imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
 
     st.markdown(
-        '<div class="note">For better results, try increasing confidence threshold and reducing image size.</div>',
+        '<div class="note">Detection mode is enabled for your trained model output.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
