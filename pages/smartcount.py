@@ -759,10 +759,16 @@ def render(go_to):
     inject_css()
     render_header()
 
-    top_cols = st.columns([1, 4])
+    top_cols = st.columns([1, 6, 2])
+    
     with top_cols[0]:
         if st.button("← Back", use_container_width=True):
             go_to("home")
+            st.rerun()
+
+    with top_cols[2]:
+        if st.button("Go To SmartCast →", use_container_width=True):
+            go_to("smartcast")
             st.rerun()
 
     model = load_model()
