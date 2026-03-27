@@ -594,33 +594,33 @@ def render(go_to):
     inject_css()
     render_header()
 
-        
     top_cols = st.columns([1, 7, 2])
+
     with top_cols[0]:
-        if st.button("← Back", width='stretch'):
+        if st.button("← Back", use_container_width=True):
             go_to("home")
             st.rerun()
-            
+
     with top_cols[2]:
-        if st.button("Go to SmartCount →", width='stretch'):
+        if st.button("Go to SmartCount →", use_container_width=True):
             go_to("smartcount")
             st.rerun()
-            
+
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Upload a CSV file</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="note">Due to limitations, please only upload the given "Retail.csv" file. </div>',
-        unsafe_allow_html=True
+        '<div class="note">Due to limitations, please only upload the given "Retail.csv" file.</div>',
+        unsafe_allow_html=True,
     )
+
     uploaded_file = st.file_uploader(
         "Upload your CSV",
         type=["csv"],
         label_visibility="collapsed",
-        accept_multiple_files= False,
+        accept_multiple_files=False,
         help="Only CSV files allowed",
-        key="smartcast_upload"
-        )
-        
+        key="smartcast_upload",
+    )
     st.markdown("</div>", unsafe_allow_html=True)
 
     if uploaded_file is None:
@@ -630,132 +630,152 @@ def render(go_to):
     if uploaded_file.name != "Retail.csv":
         st.error("Incorrect file. Please upload **Retail.csv** only.")
         return
-            
+
     try:
         preview = pd.read_csv(uploaded_file, sep=";", nrows=5)
-        uploaded_file.seek(0)  # reset for pipeline
+        uploaded_file.seek(0)
     except Exception as e:
         st.error(f"Error reading file: {e}")
         return
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Data Preview</div>', unsafe_allow_html=True)
-    st.dataframe(preview,  width='stretch')
+    st.dataframe(preview, use_container_width=True)
     st.success("✅ CSV file successfully uploaded!")
     st.markdown("</div>", unsafe_allow_html=True)
-    
+
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.markdown('<div class="panel-title">Run Analysis on the Given Dataset</div>', unsafe_allow_html=True)
-    if st.button("  Run Analysis"):
+
+    if st.button("Run Analysis", use_container_width=True):
         with st.spinner("Analyzing dataset and generating graphs…"):
             file_bytes = uploaded_file.read()
             uploaded_file.seek(0)
+
             featured_analysis, _, _, _ = run_pipeline(file_bytes)
-            
-            if st.session_state.get("analysis_done", False) and "featured_analysis" in st.session_state:
-                featured_analysis = st.session_state["featured_analysis"]
-            
-            st.plotly_chart(build_monthly_trend_chart(featured_analysis), width='stretch', config={"displaylogo": False})
-        
-            with st.expander(" View further detailed analysis"):
-                    st.plotly_chart(build_rolling_avg_chart(featured_analysis), width='stretch', config={"displaylogo": False})
-                    st.plotly_chart(build_distribution_chart(featured_analysis), width='stretch', config={"displaylogo": False})
-                    
-    
-            st.markdown("</div>", unsafe_allow_html=True)
-            
-            st.session_state["analysis_done"] = True  
+            st.session_state["featured_analysis"] = featured_analysis
+            st.session_state["analysis_done"] = True
+
         st.success("✅ Analysis complete!")
 
+    if st.session_state.get("analysis_done", False):
+        featured_analysis = st.session_state["featured_analysis"]
+
+        st.plotly_chart(
+            build_monthly_trend_chart(featured_analysis),
+            use_container_width=True,
+            config={"displaylogo": False},
+        )
+
+        with st.expander("View further detailed analysis"):
+            st.plotly_chart(
+                build_rolling_avg_chart(featured_analysis),
+                use_container_width=True,
+                config={"displaylogo": False},
+            )
+            st.plotly_chart(
+                build_distribution_chart(featured_analysis),
+                use_container_width=True,
+                config={"displaylogo": False},
+            )
 
     st.markdown("</div>", unsafe_allow_html=True)
+
     if st.session_state.get("analysis_done", False):
-        
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.markdown('<div class="panel-title">Predict Demand for 14 Days</div>', unsafe_allow_html=True)
         st.markdown(
-            '<div class="note">SmartCast predictions are powered by AI. While we strive for accuracy, please verify information before proceeding. </div>',
-            unsafe_allow_html=True
+            '<div class="note">SmartCast predictions are powered by AI. While we strive for accuracy, please verify information before proceeding.</div>',
+            unsafe_allow_html=True,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
-    
-        if st.button("  Run Forecast"):
+
+        if st.button("Run Forecast", use_container_width=True):
             with st.spinner("Training LightGBM model and generating forecast…"):
                 file_bytes = uploaded_file.read()
+                uploaded_file.seek(0)
+
                 featured, final_forecast, metrics, last_date = run_pipeline(file_bytes)
-                st.session_state["forecast_ready"]  = True
-                st.session_state["featured"]        = featured
-                st.session_state["final_forecast"]  = final_forecast
-                st.session_state["metrics"]         = metrics
-                st.session_state["last_date"]       = last_date
+
+                st.session_state["forecast_ready"] = True
+                st.session_state["featured"] = featured
+                st.session_state["final_forecast"] = final_forecast
+                st.session_state["metrics"] = metrics
+                st.session_state["last_date"] = last_date
+
             st.success("✅ Forecast complete!")
-    
-        st.markdown("</div>", unsafe_allow_html=True)
-    
-        # Forecast results
-        if st.session_state.get("forecast_ready"):
-            featured       = st.session_state["featured"]
+
+        if st.session_state.get("forecast_ready", False):
+            featured = st.session_state["featured"]
             final_forecast = st.session_state["final_forecast"]
-            metrics        = st.session_state["metrics"]
-            last_date      = st.session_state["last_date"]
-    
+            metrics = st.session_state["metrics"]
+            last_date = st.session_state["last_date"]
+
             categories = sorted(final_forecast["Product_Category"].unique().tolist())
-    
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+
             st.markdown('<div class="panel-title">📊 14-Day Demand Forecast</div>', unsafe_allow_html=True)
-    
+
             selected_cat = st.selectbox(
                 "Select Product Category",
                 options=categories,
                 index=0,
-                key="cat_select"
+                key="cat_select",
             )
-    
-            # Stats
+
             render_stats(featured, final_forecast, selected_cat, metrics)
-            
+
             st.markdown('<div class="panel-title">Settings</div>', unsafe_allow_html=True)
 
             c1, c2 = st.columns(2)
             with c1:
-                conf_thres = st.slider("Threshold",min_value=1.0, max_value=2.0, value=1.5, step=0.1)
+                conf_thres = st.slider(
+                    "Threshold",
+                    min_value=1.0,
+                    max_value=2.0,
+                    value=1.5,
+                    step=0.1,
+                )
             with c2:
                 st.markdown(
-            '<div class="note" style="text-align:right;">SmartCast compares the demand of the first prediction day against the rolling 7-day average demand. The sensitivity for the alert system can be set here.</div>',
-            unsafe_allow_html=True
+                    '<div class="note" style="text-align:right;">SmartCast compares the demand of the first prediction day against the rolling 7-day average demand. The sensitivity for the alert system can be set here.</div>',
+                    unsafe_allow_html=True,
                 )
-            
+
             render_stock_alerts(featured, final_forecast, selected_cat, conf_thres)
 
-    
-            # Chart
             fig = build_forecast_chart(featured, final_forecast, selected_cat, last_date)
-            st.plotly_chart(fig,  width='stretch', config={
-                "displaylogo": False,
-                "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
-            })
-    
-            # Forecast table
-            with st.expander(" View detailed forecast data table"):
+            st.plotly_chart(
+                fig,
+                use_container_width=True,
+                config={
+                    "displaylogo": False,
+                    "modeBarButtonsToRemove": ["select2d", "lasso2d", "autoScale2d"],
+                },
+            )
+
+            with st.expander("View detailed forecast data table"):
                 fc_table = (
                     final_forecast[final_forecast["Product_Category"] == selected_cat]
                     .sort_values("Date")
                     .reset_index(drop=True)
                 )
                 fc_table["Date"] = fc_table["Date"].dt.strftime("%d %b %Y")
-                st.dataframe(fc_table[["Date","Product_Category","Predicted_Demand"]],
-                            width='stretch')
-            
-            with st.expander(" View detailed prediction data analysis"):
-                st.plotly_chart(build_total_demand_future_data(final_forecast), 
-                                width='stretch', config={"displaylogo": False})
-                st.plotly_chart(build_weekly_demand_future_data(final_forecast),
-                                width='stretch', config={"displaylogo": False})
-            
-            st.markdown("</div>", unsafe_allow_html=True)
+                st.dataframe(
+                    fc_table[["Date", "Product_Category", "Predicted_Demand"]],
+                    use_container_width=True,
+                )
 
+            with st.expander("View detailed prediction data analysis"):
+                st.plotly_chart(
+                    build_total_demand_future_data(final_forecast),
+                    use_container_width=True,
+                    config={"displaylogo": False},
+                )
+                st.plotly_chart(
+                    build_weekly_demand_future_data(final_forecast),
+                    use_container_width=True,
+                    config={"displaylogo": False},
+                )
 
-            # Model metrics footer
             st.markdown(
                 f'<div class="note" style="text-align:center;padding-top:4px;">'
                 f'Model performance on held-out test set — '
@@ -763,6 +783,7 @@ def render(go_to):
                 f'RMSE: <strong>{metrics["RMSE"]:,}</strong> &nbsp;|&nbsp; '
                 f'SMAPE: <strong>{metrics["SMAPE"]}%</strong>'
                 f'</div>',
-                unsafe_allow_html=True
+                unsafe_allow_html=True,
             )
-    
+
+        st.markdown("</div>", unsafe_allow_html=True)
