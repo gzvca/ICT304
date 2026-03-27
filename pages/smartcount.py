@@ -753,7 +753,7 @@ class WebcamProcessor:
         self.latest_counts = {}
         self.latest_detections = []
         self.frame_counter = 0
-        self.process_every_n = 2
+        self.process_every_n = 5
         self.prev_time = time.time()
         self.last_annotated_bgr = None
 
@@ -888,7 +888,7 @@ def render(go_to):
     with c1:
         conf_thres = st.slider("Confidence Threshold", 0.30, 0.95, 0.65, 0.05)
     with c2:
-        imgsz = st.select_slider("Image Size", options=[320, 416, 512, 640, 800], value=512)
+        imgsz = st.select_slider("Image Size", options=[320, 416, 512, 640, 800], value=416)
 
     st.markdown(
         '<div class="note">For live webcam, use confidence 0.65 to 0.75 and image size 416 or 512.</div>',
@@ -1022,9 +1022,9 @@ def render(go_to):
             mode=WebRtcMode.SENDRECV,
             media_stream_constraints={
                 "video": {
-                    "width": {"ideal": 1280},
-                    "height": {"ideal": 720},
-                    "frameRate": {"ideal": 20},
+                    "width": {"ideal": 649},
+                    "height": {"ideal": 480},
+                    "frameRate": {"ideal": 12},
                 },
                 "audio": False,
             },
