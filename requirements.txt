@@ -1,0 +1,10 @@
+streamlit
+pandas
+numpy
+plotly
+scikit-learn
+lightgbm
+ultralytics
+Pillow
+opencv-python-headless
+matplotlib
