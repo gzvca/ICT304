@@ -1,26 +1,32 @@
+import csv
+import tempfile
+import threading
+import time
+from collections import defaultdict, deque
+from datetime import datetime
+from pathlib import Path
+
+import av
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 import streamlit as st
 import streamlit.components.v1 as components
-from ultralytics import YOLO
 from PIL import Image
-from collections import defaultdict
-import numpy as np
-import tempfile
-import cv2
-import subprocess
-import sys
-import os
-import csv
-from datetime import datetime
-import matplotlib.pyplot as plt
+from streamlit_webrtc import WebRtcMode, webrtc_streamer
+from ultralytics import YOLO
 
-MODEL_PATH = "my_model.pt"
-WEBCAM_SCRIPT = "smartcount.py"
-HISTORY_CSV = "smartcount_history.csv"
+# -----------------------------
+# Paths
+# -----------------------------
+BASE_DIR = Path(__file__).resolve().parents[1]
+MODEL_PATH = BASE_DIR / "my_model.pt"
+HISTORY_CSV = BASE_DIR / "smartcount_history.csv"
 
 
 @st.cache_resource
 def load_model():
-    return YOLO(MODEL_PATH)
+    return YOLO(str(MODEL_PATH))
 
 
 def inject_css():
@@ -239,8 +245,11 @@ def ensure_obb_result(res):
         raise RuntimeError("This model output does not contain oriented detections.")
 
 
-def get_detections_and_counts(res, conf_threshold=0.70):
+def normalize_class_name(name):
+    return str(name).strip().title()
 
+
+def get_detections_and_counts(res, conf_threshold=0.70, min_box_area=2500):
     ensure_obb_result(res)
 
     detections = []
@@ -255,7 +264,16 @@ def get_detections_and_counts(res, conf_threshold=0.70):
             if conf < conf_threshold:
                 continue
 
-            class_name = res.names[cid]
+            xs = pts[:, 0]
+            ys = pts[:, 1]
+            box_w = float(xs.max() - xs.min())
+            box_h = float(ys.max() - ys.min())
+            box_area = box_w * box_h
+
+            if box_area < min_box_area:
+                continue
+
+            class_name = normalize_class_name(res.names[cid])
             detections.append((class_name, float(conf), pts.copy()))
             class_counts[class_name] += 1
 
@@ -288,11 +306,11 @@ def get_class_colors():
     }
 
 
-def draw_filtered_detections(image_rgb, detections):
-    image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+def draw_filtered_detections_bgr(image_bgr, detections):
+    annotated = image_bgr.copy()
     colors = get_class_colors()
 
-    h, w = image_bgr.shape[:2]
+    h, w = annotated.shape[:2]
     font_scale = max(0.6, min(w, h) / 900)
     thickness = max(2, int(min(w, h) / 350))
     padding = max(4, int(min(w, h) / 250))
@@ -301,7 +319,7 @@ def draw_filtered_detections(image_rgb, detections):
         pts = np.asarray(poly, dtype=np.int32).reshape((-1, 1, 2))
         color = colors.get(class_name, (0, 255, 0))
 
-        cv2.polylines(image_bgr, [pts], isClosed=True, color=color, thickness=thickness)
+        cv2.polylines(annotated, [pts], isClosed=True, color=color, thickness=thickness)
 
         x1, y1, _, _ = polygon_bbox(poly)
         x1 = int(x1)
@@ -318,7 +336,7 @@ def draw_filtered_detections(image_rgb, detections):
         top = max(0, y1 - th - padding * 2)
 
         cv2.rectangle(
-            image_bgr,
+            annotated,
             (x1, top),
             (x1 + tw + padding * 2, top + th + padding * 2),
             color,
@@ -326,7 +344,7 @@ def draw_filtered_detections(image_rgb, detections):
         )
 
         cv2.putText(
-            image_bgr,
+            annotated,
             label,
             (x1 + padding, top + th + padding // 2),
             cv2.FONT_HERSHEY_SIMPLEX,
@@ -335,22 +353,52 @@ def draw_filtered_detections(image_rgb, detections):
             thickness
         )
 
-    return cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+    return annotated
 
 
-def launch_webcam_script():
-    script_path = os.path.join(os.getcwd(), WEBCAM_SCRIPT)
+def draw_filtered_detections(image_rgb, detections):
+    image_bgr = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2BGR)
+    annotated_bgr = draw_filtered_detections_bgr(image_bgr, detections)
+    return cv2.cvtColor(annotated_bgr, cv2.COLOR_BGR2RGB)
 
-    if not os.path.exists(script_path):
-        st.error(f"{WEBCAM_SCRIPT} not found in the project folder.")
-        return
 
-    try:
-        subprocess.Popen([sys.executable, script_path])
-        st.success("Live webcam started in a separate window.")
-        st.info("Use the OpenCV popup window and press 'q' there to finish.")
-    except Exception as e:
-        st.error(f"Failed to start webcam script: {e}")
+def draw_live_overlay(frame_bgr, class_counts, frame_idx, fps_value, title="SMARTCOUNT"):
+    padding = 10
+    line_height = 28
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.75
+    thickness = 2
+
+    total = sum(class_counts.values())
+    lines = [
+        title,
+        f"Frame: {frame_idx}",
+        f"FPS: {fps_value:.1f}",
+    ]
+
+    for cls_name in sorted(class_counts.keys()):
+        lines.append(f"{cls_name.lower()}: {class_counts[cls_name]}")
+
+    lines.append(f"TOTAL: {total}")
+
+    box_w = 360
+    box_h = padding * 2 + line_height * len(lines)
+
+    overlay = frame_bgr.copy()
+    cv2.rectangle(overlay, (0, 0), (box_w, box_h), (0, 0, 0), -1)
+    cv2.addWeighted(overlay, 0.45, frame_bgr, 0.55, 0, frame_bgr)
+
+    for i, line in enumerate(lines):
+        y = padding + (i + 1) * line_height
+        color = (255, 255, 255)
+        if i == 0:
+            color = (0, 255, 255)
+        elif line.startswith("TOTAL"):
+            color = (0, 255, 0)
+
+        cv2.putText(frame_bgr, line, (padding, y), font, font_scale, color, thickness)
+
+    return frame_bgr
 
 
 def show_counts(counts):
@@ -400,7 +448,7 @@ def show_counts(counts):
         )
 
     st.markdown(
-        '<div class="note">These counts are based on raw detections after confidence filtering.</div>',
+        '<div class="note">These counts are based on stabilized live detections, not just one frame.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
@@ -408,11 +456,9 @@ def show_counts(counts):
 
 def check_alerts(counts):
     alerts = []
-
     for item, count in counts.items():
         if count < 3:
             alerts.append(f"⚠️ {item}: Low stock (restock soon) — only {count} left")
-
     return alerts
 
 
@@ -445,7 +491,7 @@ def save_history(counts, source_type):
         "counts_json": "; ".join([f"{k}: {v}" for k, v in sorted(counts.items())]),
     }
 
-    file_exists = os.path.exists(HISTORY_CSV)
+    file_exists = HISTORY_CSV.exists()
 
     with open(HISTORY_CSV, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=list(row.keys()))
@@ -479,7 +525,7 @@ def show_counts_chart(counts):
 
 
 def read_history_rows():
-    if not os.path.exists(HISTORY_CSV):
+    if not HISTORY_CSV.exists():
         return []
 
     rows = []
@@ -503,18 +549,10 @@ def show_history_table():
     c1, c2, c3 = st.columns([1, 1, 2])
 
     with c1:
-        source_filter = st.selectbox(
-            "Filter by Source",
-            ["All", "Image", "Video", "Webcam"],
-            index=0
-        )
+        source_filter = st.selectbox("Filter by Source", ["All", "Image", "Video", "Webcam"], index=0)
 
     with c2:
-        status_filter = st.selectbox(
-            "Filter by Status",
-            ["All", "OK", "Low Stock"],
-            index=0
-        )
+        status_filter = st.selectbox("Filter by Status", ["All", "OK", "Low Stock"], index=0)
 
     with c3:
         search_text = st.text_input("Search item in Count Breakdown", "")
@@ -539,13 +577,10 @@ def show_history_table():
     for row in enriched_rows:
         if source_filter != "All" and row["source"] != source_filter:
             continue
-
         if status_filter != "All" and row["status"] != status_filter:
             continue
-
         if search_text.strip() and search_text.lower() not in row["counts_json"].lower():
             continue
-
         filtered_rows.append(row)
 
     total_scans = len(filtered_rows)
@@ -556,48 +591,13 @@ def show_history_table():
     s1, s2, s3, s4 = st.columns(4)
 
     with s1:
-        st.markdown(
-            f"""
-            <div class="stat-card stat-dark">
-                <div class="stat-label">Total Scans</div>
-                <div class="stat-value">{total_scans}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.markdown(f'<div class="stat-card stat-dark"><div class="stat-label">Total Scans</div><div class="stat-value">{total_scans}</div></div>', unsafe_allow_html=True)
     with s2:
-        st.markdown(
-            f"""
-            <div class="stat-card stat-blue">
-                <div class="stat-label">Latest Source</div>
-                <div class="stat-value" style="font-size:1.4rem;">{latest_source}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.markdown(f'<div class="stat-card stat-blue"><div class="stat-label">Latest Source</div><div class="stat-value" style="font-size:1.4rem;">{latest_source}</div></div>', unsafe_allow_html=True)
     with s3:
-        st.markdown(
-            f"""
-            <div class="stat-card stat-dark">
-                <div class="stat-label">Latest Total Items</div>
-                <div class="stat-value">{latest_total}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-
+        st.markdown(f'<div class="stat-card stat-dark"><div class="stat-label">Latest Total Items</div><div class="stat-value">{latest_total}</div></div>', unsafe_allow_html=True)
     with s4:
-        st.markdown(
-            f"""
-            <div class="stat-card stat-blue">
-                <div class="stat-label">Low Stock Scans</div>
-                <div class="stat-value">{low_stock_scans}</div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown(f'<div class="stat-card stat-blue"><div class="stat-label">Low Stock Scans</div><div class="stat-value">{low_stock_scans}</div></div>', unsafe_allow_html=True)
 
     row_html = ""
     for row in filtered_rows[:20]:
@@ -633,7 +633,6 @@ def show_history_table():
                 background: transparent;
                 font-family: Arial, sans-serif;
             }}
-
             .history-table {{
                 width: 100%;
                 border-collapse: separate;
@@ -642,7 +641,6 @@ def show_history_table():
                 border-radius: 14px;
                 margin-top: 12px;
             }}
-
             .history-table th {{
                 background: linear-gradient(90deg, #1e3c72, #2a5298);
                 color: white;
@@ -652,7 +650,6 @@ def show_history_table():
                 position: sticky;
                 top: 0;
             }}
-
             .history-table td {{
                 padding: 12px;
                 border-top: 1px solid #e5edf5;
@@ -662,15 +659,12 @@ def show_history_table():
                 background: white;
                 vertical-align: middle;
             }}
-
             .history-table tr:nth-child(even) td {{
                 background: #fafcff;
             }}
-
             .history-table tr:hover td {{
                 background: #f5f7fa;
             }}
-
             .history-table td:nth-child(4) {{
                 text-align: left;
                 white-space: normal;
@@ -678,13 +672,11 @@ def show_history_table():
                 min-width: 230px;
                 line-height: 1.6;
             }}
-
             .history-table td:nth-child(6) {{
                 white-space: normal;
                 word-break: break-word;
                 min-width: 180px;
             }}
-
             .history-table td:nth-child(7) {{
                 min-width: 120px;
             }}
@@ -747,9 +739,128 @@ def run_prediction(model, image_rgb, conf_thres, imgsz):
         imgsz=imgsz,
         verbose=False
     )[0]
-
     ensure_obb_result(res)
     return res
+
+
+class WebcamProcessor:
+    def __init__(self, model, conf_thres, imgsz):
+        self.model = model
+        self.conf_thres = max(conf_thres, 0.65)
+        self.imgsz = imgsz
+        self.lock = threading.Lock()
+
+        self.latest_counts = {}
+        self.latest_detections = []
+        self.frame_counter = 0
+        self.process_every_n = 2
+        self.prev_time = time.time()
+        self.last_annotated_bgr = None
+
+        self.class_history = defaultdict(lambda: deque(maxlen=8))
+        self.count_history = deque(maxlen=8)
+        self.min_positive_frames = 2
+
+    def _stable_counts_from_history(self):
+        stable_counts = {}
+        all_classes = set(self.class_history.keys())
+
+        for cls in all_classes:
+            values = list(self.class_history[cls])
+            if not values:
+                continue
+
+            positive_values = [v for v in values if v > 0]
+            if len(positive_values) >= self.min_positive_frames:
+                stable_counts[cls] = int(round(max(positive_values)))
+
+        return stable_counts
+
+    def recv(self, frame):
+        img_bgr = frame.to_ndarray(format="bgr24")
+        self.frame_counter += 1
+
+        now = time.time()
+        fps = 1.0 / max(now - self.prev_time, 1e-6)
+        self.prev_time = now
+
+        try:
+            if self.frame_counter % self.process_every_n == 0:
+                img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+                res = run_prediction(self.model, img_rgb, self.conf_thres, self.imgsz)
+                detections, counts = get_detections_and_counts(
+                    res,
+                    conf_threshold=self.conf_thres,
+                    min_box_area=2500
+                )
+
+                seen_classes = set(self.class_history.keys()) | set(counts.keys())
+                for cls in seen_classes:
+                    self.class_history[cls].append(counts.get(cls, 0))
+
+                stable_counts = self._stable_counts_from_history()
+                stable_class_names = set(stable_counts.keys())
+
+                stable_detections = [
+                    (class_name, conf, pts)
+                    for class_name, conf, pts in detections
+                    if class_name in stable_class_names
+                ]
+
+                annotated_bgr = draw_filtered_detections_bgr(img_bgr, stable_detections)
+                annotated_bgr = draw_live_overlay(
+                    annotated_bgr,
+                    stable_counts,
+                    self.frame_counter,
+                    fps,
+                    title="SMARTCOUNT"
+                )
+
+                with self.lock:
+                    self.latest_counts = stable_counts
+                    self.latest_detections = stable_detections
+                    self.last_annotated_bgr = annotated_bgr
+
+            else:
+                with self.lock:
+                    counts = dict(self.latest_counts)
+
+                if self.last_annotated_bgr is not None:
+                    annotated_bgr = self.last_annotated_bgr.copy()
+                    annotated_bgr = draw_live_overlay(
+                        annotated_bgr,
+                        counts,
+                        self.frame_counter,
+                        fps,
+                        title="SMARTCOUNT"
+                    )
+                else:
+                    annotated_bgr = draw_live_overlay(
+                        img_bgr.copy(),
+                        counts,
+                        self.frame_counter,
+                        fps,
+                        title="SMARTCOUNT"
+                    )
+
+        except Exception:
+            with self.lock:
+                counts = dict(self.latest_counts)
+
+            annotated_bgr = draw_live_overlay(
+                img_bgr.copy(),
+                counts,
+                self.frame_counter,
+                fps,
+                title="SMARTCOUNT"
+            )
+
+        return av.VideoFrame.from_ndarray(annotated_bgr, format="bgr24")
+
+    def get_latest_counts(self):
+        with self.lock:
+            return dict(self.latest_counts)
 
 
 def render(go_to):
@@ -757,7 +868,7 @@ def render(go_to):
     render_header()
 
     top_cols = st.columns([1, 6, 2])
-    
+
     with top_cols[0]:
         if st.button("← Back", use_container_width=True):
             go_to("home")
@@ -775,12 +886,12 @@ def render(go_to):
 
     c1, c2 = st.columns(2)
     with c1:
-        conf_thres = st.slider("Confidence Threshold", 0.05, 0.95, 0.40, 0.05)
+        conf_thres = st.slider("Confidence Threshold", 0.30, 0.95, 0.65, 0.05)
     with c2:
-        imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
+        imgsz = st.select_slider("Image Size", options=[320, 416, 512, 640, 800], value=512)
 
     st.markdown(
-        '<div class="note">For better results, try adjusting the confidence threshold and image size using the sliders above.</div>',
+        '<div class="note">For live webcam, use confidence 0.65 to 0.75 and image size 416 or 512.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
@@ -815,7 +926,7 @@ def render(go_to):
                 image_np = np.array(image)
                 res = run_prediction(model, image_np, conf_thres, imgsz)
 
-                detections, counts = get_detections_and_counts(res, conf_thres)
+                detections, counts = get_detections_and_counts(res, conf_thres, min_box_area=1200)
                 annotated = draw_filtered_detections(image_np, detections)
 
                 st.image(annotated, caption="Prediction Result", width=1200)
@@ -863,11 +974,10 @@ def render(go_to):
                             break
 
                         frame_idx += 1
-
                         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                         res = run_prediction(model, frame_rgb, conf_thres, imgsz)
 
-                        detections, counts = get_detections_and_counts(res, conf_thres)
+                        detections, counts = get_detections_and_counts(res, conf_thres, min_box_area=1200)
 
                         for cls in set(all_counts.keys()) | set(counts.keys()):
                             all_counts[cls].append(counts.get(cls, 0))
@@ -900,15 +1010,52 @@ def render(go_to):
         st.markdown(
             """
             <div class="soft-box">
-                This mode launches your existing OpenCV live counting app in a separate window.<br>
-                Press <b>q</b> inside the popup window to finish live counting.
+                Click <b>START</b>, allow camera access, and wait 2 to 3 seconds.
+                The dashboard below now uses stabilized counts across recent live frames instead of only one frame.
             </div>
             """,
             unsafe_allow_html=True
         )
 
-        if st.button("Start Live Webcam", use_container_width=True):
-            launch_webcam_script()
+        webcam_ctx = webrtc_streamer(
+            key=f"smartcount-live-{conf_thres}-{imgsz}",
+            mode=WebRtcMode.SENDRECV,
+            media_stream_constraints={
+                "video": {
+                    "width": {"ideal": 1280},
+                    "height": {"ideal": 720},
+                    "frameRate": {"ideal": 20},
+                },
+                "audio": False,
+            },
+            video_processor_factory=lambda: WebcamProcessor(model, conf_thres, imgsz),
+            async_processing=True,
+        )
+
+        if webcam_ctx and webcam_ctx.video_processor:
+            st.markdown(
+                '<div class="note">The live stream and the dashboard now use stabilized webcam detections.</div>',
+                unsafe_allow_html=True
+            )
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Refresh Live Counts", use_container_width=True):
+                    st.rerun()
+
+            latest_counts = webcam_ctx.video_processor.get_latest_counts()
+
+            if latest_counts:
+                show_counts(latest_counts)
+                show_alerts(latest_counts)
+                show_counts_chart(latest_counts)
+
+                with col2:
+                    if st.button("Save Current Webcam Counts", use_container_width=True):
+                        save_history(latest_counts, "Webcam")
+                        st.success("Current webcam counts saved.")
+            else:
+                st.info("Waiting for detections from the live webcam stream...")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
