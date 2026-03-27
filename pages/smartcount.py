@@ -1,5 +1,6 @@
 import streamlit as st
 import streamlit.components.v1 as components
+from streamlit_webrtc import webrtc_streamer
 from ultralytics import YOLO
 from PIL import Image
 from collections import defaultdict
@@ -12,6 +13,7 @@ import os
 import csv
 from datetime import datetime
 import matplotlib.pyplot as plt
+
 
 MODEL_PATH = "my_model.pt"
 WEBCAM_SCRIPT = "smartcount.py"
@@ -340,7 +342,7 @@ def draw_filtered_detections(image_rgb, detections):
 
     return cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
 
-
+'''
 def launch_webcam_script():
     script_path = os.path.join(os.getcwd(), WEBCAM_SCRIPT)
 
@@ -354,6 +356,28 @@ def launch_webcam_script():
         st.info("Use the OpenCV popup window and press 'q' there to finish.")
     except Exception as e:
         st.error(f"Failed to start webcam script: {e}")
+'''
+def video_frame_callback(frame):
+    img = frame.to_ndarray(format="bgr24")
+    
+    # Run your YOLO model here
+    results = model(img)
+    annotated = results[0].plot()
+    
+    return av.VideoFrame.from_ndarray(annotated, format="bgr24")
+
+'''
+webrtc_streamer(
+    key="webcam",
+    video_frame_callback=video_frame_callback,
+    media_stream_constraints={"video": True, "audio": False},
+)
+'''
+webrtc_streamer(
+    key="webcam",
+    video_frame_callback=video_frame_callback,
+    media_stream_constraints={"video": True, "audio": False},
+)
 
 
 def show_counts(counts):
