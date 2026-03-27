@@ -190,21 +190,6 @@ if st.session_state.page == "home":
           margin: 0;
           max-width: 760px;
         }}
-
-        @media (max-width: 768px) {{
-          .hero-flex {{
-            flex-direction: column;
-            align-items: flex-start;
-          }}
-
-          .hero-logo-wrap img {{
-            width: 88px;
-          }}
-
-          .hero-title {{
-            font-size: 2.3rem;
-          }}
-        }}
       </style>
     </head>
     <body>
@@ -216,7 +201,7 @@ if st.session_state.page == "home":
           <div class="hero-text">
             <div class="hero-title">SuperSmart</div>
             <p class="hero-sub">
-              A smart retail intelligence platform for automated counting, monitoring, and visual analysis using AI.<br>
+              A smart retail intelligence platform for automated counting, monitoring, and visual analysis using AI.
             </p>
           </div>
         </div>
@@ -226,6 +211,9 @@ if st.session_state.page == "home":
     """
 
     components.html(hero_html, height=230, scrolling=False)
+
+    # ✅ INFO BANNER ADDED HERE
+    st.info("💡 For a better viewing experience, please enable Light Mode from the menu on the top-right.")
 
     st.markdown('<div class="section-title">Choose a Module</div>', unsafe_allow_html=True)
 
@@ -238,12 +226,6 @@ if st.session_state.page == "home":
                 <div class="card-title">📦 SmartCount</div>
                 <div class="card-desc">
                     Detect and count products from images, videos, or live webcam.
-                </div>
-                <div>
-                    <span class="pill">Image</span>
-                    <span class="pill">Video</span>
-                    <span class="pill">Webcam</span>
-                    <span class="pill">Alerts</span>
                 </div>
             </div>
             """,
@@ -260,11 +242,6 @@ if st.session_state.page == "home":
                 <div class="card-title">📺 SmartCast</div>
                 <div class="card-desc">
                     Demand forecasting using AI and time-series insights.
-                </div>
-                <div>
-                    <span class="pill">Live</span>
-                    <span class="pill">AI</span>
-                    <span class="pill">Insights</span>
                 </div>
             </div>
             """,
