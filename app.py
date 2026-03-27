@@ -217,7 +217,6 @@ if st.session_state.page == "home":
             <div class="hero-title">SuperSmart</div>
             <p class="hero-sub">
               A smart retail intelligence platform for automated counting, monitoring, and visual analysis using AI.<br>
-              <span style="font-size: 0.85em;">(For a better viewing experience, please enable Light Mode from the menu on the top-right.)</span>
             </p>
           </div>
         </div>
