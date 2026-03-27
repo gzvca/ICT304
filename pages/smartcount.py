@@ -782,7 +782,7 @@ def render(go_to):
         imgsz = st.select_slider("Image Size", options=[320, 512, 640, 800, 960], value=640)
 
     st.markdown(
-        '<div class="note">Detection mode is enabled for your trained model output.</div>',
+        '<div class="note">For better results, try increasing confidence threshold and reducing image size.</div>',
         unsafe_allow_html=True
     )
     st.markdown('</div>', unsafe_allow_html=True)
